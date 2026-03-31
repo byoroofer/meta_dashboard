@@ -1,4 +1,5 @@
 import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
+import { getPortalData } from "@/lib/services/portal-service";
 import type { OverviewMetric } from "@/types/domain";
 
 export async function getOverviewData() {
@@ -11,9 +12,7 @@ export async function getOverviewData() {
     connectedAssets,
     autoResponderRules,
     leadDestinations,
-    integrationTargets,
-    commandTemplates,
-    commandExecutions
+    portal
   ] = await Promise.all([
     dashboardRepository.getConversations(),
     dashboardRepository.getLeads(),
@@ -23,9 +22,7 @@ export async function getOverviewData() {
     dashboardRepository.getConnectedAssets(),
     dashboardRepository.getAutoResponderRules(),
     dashboardRepository.getLeadDestinations(),
-    dashboardRepository.getIntegrationTargets(),
-    dashboardRepository.getCommandTemplates(),
-    dashboardRepository.getCommandExecutions()
+    getPortalData()
   ]);
 
   const metrics: OverviewMetric[] = [
@@ -49,8 +46,8 @@ export async function getOverviewData() {
     },
     {
       label: "Portal commands",
-      value: `${commandTemplates.filter((item) => item.status === "active").length}`,
-      delta: `${integrationTargets.filter((item) => item.status === "active").length} active targets live`,
+      value: `${portal.templates.filter((item) => item.status === "active").length}`,
+      delta: `${portal.targets.filter((item) => item.status === "active").length} active targets live`,
       tone: "positive"
     }
   ];
@@ -77,9 +74,9 @@ export async function getOverviewData() {
     autoResponderRules,
     leadDestinations,
     rawEvents,
-    integrationTargets,
-    commandTemplates,
-    commandExecutions,
+    integrationTargets: portal.targets,
+    commandTemplates: portal.templates,
+    commandExecutions: portal.executions,
     alerts
   };
 }
