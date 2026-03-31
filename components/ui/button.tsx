@@ -7,18 +7,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-xl text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)] disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center rounded-lg border text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/30 disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-[var(--accent)] px-4 py-2.5 text-slate-950 hover:bg-[#7ae2d5]",
-        secondary: "bg-white/8 px-4 py-2.5 text-white hover:bg-white/12",
-        outline: "border border-white/12 px-4 py-2.5 text-white hover:bg-white/6",
-        ghost: "px-3 py-2 text-[var(--muted)] hover:bg-white/6 hover:text-white"
+        default: "border-[var(--accent)] bg-[var(--accent)] px-4 py-2.5 text-white hover:bg-[var(--accent-strong)] hover:border-[var(--accent-strong)]",
+        secondary: "border-[var(--border)] bg-white px-4 py-2.5 text-slate-800 hover:bg-slate-50",
+        outline: "border-[var(--border-strong)] bg-transparent px-4 py-2.5 text-slate-700 hover:bg-slate-50",
+        ghost: "border-transparent px-3 py-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       },
       size: {
         default: "h-10",
-        sm: "h-8 rounded-lg px-3 text-xs",
+        sm: "h-8 rounded-md px-3 text-xs",
         lg: "h-11 px-5 text-sm"
       }
     },

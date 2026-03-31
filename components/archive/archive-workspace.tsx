@@ -23,9 +23,9 @@ export function ArchiveWorkspace({
       />
 
       <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Preservation model</CardTitle>
+            <CardTitle>Preservation model</CardTitle>
             <CardDescription>Explicit server-side lifecycle for every supported inbound or outbound business message.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -38,20 +38,20 @@ export function ArchiveWorkspace({
               "6. Hash and persist archive record",
               "7. Log processing outcome and audit trail"
             ].map((step) => (
-              <div key={step} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/90">
+              <div key={step} className="rounded-xl border border-[var(--border)] bg-slate-50 px-4 py-3 text-sm text-slate-800">
                 {step}
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Raw event preview</CardTitle>
-            <CardDescription>Exact JSON persistence is handled server-side; the UI exposes a browsable event surface.</CardDescription>
+            <CardTitle>Raw event preview</CardTitle>
+            <CardDescription>The UI exposes a browsable event surface while exact JSON persistence stays server-side.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {events.map((event) => (
-              <div key={event.id} className="rounded-2xl border border-white/10 bg-black/30 p-4 font-[var(--font-mono)] text-xs leading-6 text-[var(--muted)]">
+              <div key={event.id} className="rounded-xl border border-[var(--border)] bg-slate-900 p-4 font-[var(--font-mono)] text-xs leading-6 text-slate-200">
                 <div className="mb-2 flex items-center justify-between gap-3 font-sans text-sm">
                   <span className="font-medium text-white">{event.eventType}</span>
                   <StatusBadge value={event.processingStatus} />
@@ -63,9 +63,9 @@ export function ArchiveWorkspace({
         </Card>
       </section>
 
-      <Card className="border-white/10 bg-black/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">{mode === "messages" ? "Message archive" : "Raw event ledger"}</CardTitle>
+          <CardTitle>{mode === "messages" ? "Message archive" : "Raw event ledger"}</CardTitle>
           <CardDescription>
             {mode === "messages"
               ? "Canonical archive snapshots are versioned and hashed."
@@ -75,11 +75,11 @@ export function ArchiveWorkspace({
         <CardContent>
           {mode === "messages" ? (
             <DataTable
-              columns={["Archive ID", "Message ID", "Snapshot Hash", "Version", "Retention", "Created"]}
+              columns={["Archive ID", "Message ID", "Snapshot hash", "Version", "Retention", "Created"]}
               rows={messageArchive.map((item) => [
                 item.id,
                 item.messageId,
-                item.snapshotHash.slice(0, 18) + "...",
+                `${item.snapshotHash.slice(0, 18)}...`,
                 `${item.canonicalVersion}`,
                 item.retentionClass,
                 formatDateTime(item.createdAt)

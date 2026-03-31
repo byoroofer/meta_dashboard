@@ -1,4 +1,4 @@
-import { Activity, DatabaseZap, Shield, Webhook } from "lucide-react";
+import { Activity, Globe, MessageSquareReply, Shield, Webhook } from "lucide-react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { MetricCard } from "@/components/shared/metric-card";
@@ -6,17 +6,30 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
-import type { ConnectedAsset, OverviewMetric, SyncJob } from "@/types/domain";
+import type {
+  AutoResponderRule,
+  ConnectedAsset,
+  LeadDestination,
+  OverviewMetric,
+  RawWebhookEvent,
+  SyncJob
+} from "@/types/domain";
 
 export function OverviewDashboard({
   metrics,
   syncJobs,
   connectedAssets,
+  autoResponderRules,
+  leadDestinations,
+  rawEvents,
   alerts
 }: {
   metrics: OverviewMetric[];
   syncJobs: SyncJob[];
   connectedAssets: ConnectedAsset[];
+  autoResponderRules: AutoResponderRule[];
+  leadDestinations: LeadDestination[];
+  rawEvents: RawWebhookEvent[];
   alerts: { id: string; title: string; body: string; tone: "neutral" | "warning" }[];
 }) {
   return (
@@ -24,7 +37,7 @@ export function OverviewDashboard({
       <PageHeader
         eyebrow="Operations center"
         title="Overview"
-        description="High-signal business operations view across messaging, lead intake, ad performance, sync health, and archive integrity."
+        description="Meta-style business workspace for messaging, lead capture, website delivery, ads visibility, and archive integrity."
       />
 
       <section className="grid gap-4 xl:grid-cols-4">
@@ -33,43 +46,46 @@ export function OverviewDashboard({
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="border-white/10 bg-black/20">
+      <section className="grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+        <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
+            <CardTitle className="flex items-center gap-2">
               <Webhook className="h-5 w-5 text-[var(--accent)]" />
-              Processing pipeline
+              Message preservation pipeline
             </CardTitle>
-            <CardDescription>Every business message and webhook stays recoverable from raw receipt to archive snapshot.</CardDescription>
+            <CardDescription>Operational flow follows the same admin-first logic throughout the product: receive, preserve, normalize, route, archive.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             {[
-              { icon: Webhook, title: "Ingest", body: "Raw webhook payloads are stored exactly as received with dedupe keys." },
-              { icon: Activity, title: "Normalize", body: "Operational tables power the inbox, leads, contacts, and ads surfaces." },
-              { icon: DatabaseZap, title: "Archive", body: "Canonical snapshots are hashed to preserve message history immutably." },
-              { icon: Shield, title: "Audit", body: "Security-sensitive actions and processing events are captured for traceability." }
+              { icon: Webhook, title: "Receive", body: "Capture the raw webhook payload before any mutation or validation step." },
+              { icon: Activity, title: "Normalize", body: "Project business-safe records into inbox, contacts, leads, and reporting tables." },
+              { icon: MessageSquareReply, title: "Respond", body: "Apply auto-responder rules only on supported Pages and professional accounts." },
+              { icon: Shield, title: "Archive", body: "Hash the canonical message snapshot and retain the event-processing trail." }
             ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <item.icon className="h-5 w-5 text-[var(--accent-strong)]" />
-                <h3 className="mt-3 text-lg font-semibold text-white">{item.title}</h3>
+              <div key={item.title} className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                <item.icon className="h-5 w-5 text-[var(--accent)]" />
+                <h3 className="mt-3 text-sm font-semibold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{item.body}</p>
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Attention queue</CardTitle>
-            <CardDescription>Operational items that need a human or system follow-up next.</CardDescription>
+            <CardTitle>Attention queue</CardTitle>
+            <CardDescription>Operational tasks that look like Meta Business Suite to-dos: sync, routing, automation, and delivery exceptions.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {alerts.map((alert) => (
-              <div key={alert.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="font-medium text-white">{alert.title}</h3>
+              <div key={alert.id} className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">{alert.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{alert.body}</p>
+                  </div>
                   <StatusBadge value={alert.tone === "warning" ? "warning" : "queued"} />
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{alert.body}</p>
               </div>
             ))}
           </CardContent>
@@ -77,10 +93,52 @@ export function OverviewDashboard({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Sync jobs</CardTitle>
-            <CardDescription>Queue and polling placeholders for webhook processing and scheduled sync routines.</CardDescription>
+            <CardTitle>Auto responders</CardTitle>
+            <CardDescription>Scoped to supported business Pages and Instagram professional accounts only.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={["Rule", "Trigger", "Status", "Response window", "Last triggered"]}
+              rows={autoResponderRules.map((rule) => [
+                rule.name,
+                rule.trigger.replaceAll("_", " "),
+                <StatusBadge key={`${rule.id}-status`} value={rule.status} />,
+                rule.responseWindowLabel,
+                formatDateTime(rule.lastTriggeredAt)
+              ])}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-[var(--accent)]" />
+              Website lead delivery
+            </CardTitle>
+            <CardDescription>Lead records can be delivered into website endpoints and forms once field maps and auth are finalized.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={["Destination", "Type", "Status", "Outcome", "Last delivered"]}
+              rows={leadDestinations.map((destination) => [
+                destination.name,
+                destination.destinationType.replaceAll("_", " "),
+                <StatusBadge key={`${destination.id}-status`} value={destination.status} />,
+                <StatusBadge key={`${destination.id}-outcome`} value={destination.lastDeliveryOutcome} />,
+                formatDateTime(destination.lastDeliveredAt)
+              ])}
+            />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Sync jobs</CardTitle>
+            <CardDescription>Queue placeholders for webhook processing, reporting syncs, and website delivery retries.</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable
@@ -94,14 +152,14 @@ export function OverviewDashboard({
             />
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Connected assets</CardTitle>
-            <CardDescription>Health and sync visibility across the supported Meta business asset footprint.</CardDescription>
+            <CardTitle>Connected assets</CardTitle>
+            <CardDescription>Health and sync visibility across the Meta asset footprint attached to the business.</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable
-              columns={["Asset", "Type", "Connection", "Sync", "Webhook", "Last Sync"]}
+              columns={["Asset", "Type", "Connection", "Sync", "Webhook", "Last sync"]}
               rows={connectedAssets.map((asset) => [
                 asset.name,
                 asset.type.replaceAll("_", " "),
@@ -114,6 +172,25 @@ export function OverviewDashboard({
           </CardContent>
         </Card>
       </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent raw events</CardTitle>
+          <CardDescription>Raw event browsing remains available so inbound business activity is always recoverable.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={["Platform", "Type", "Status", "Received", "Dedupe key"]}
+            rows={rawEvents.map((event) => [
+              event.platform,
+              event.eventType,
+              <StatusBadge key={`${event.id}-status`} value={event.processingStatus} />,
+              formatDateTime(event.receivedAt),
+              event.dedupeKey
+            ])}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }

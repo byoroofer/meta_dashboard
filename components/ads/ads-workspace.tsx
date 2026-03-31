@@ -32,13 +32,13 @@ export function AdsWorkspace({
       <PageHeader
         eyebrow="Ad reporting"
         title={mode === "overview" ? "Ads" : mode.charAt(0).toUpperCase() + mode.slice(1)}
-        description="Connected Meta ad account views with campaigns, ad sets, ads, and daily insights table structure ready for Supabase-backed sync."
+        description="Connected Meta ad account views with campaign, ad set, ad, and daily insight structures in the same Business Center visual system."
       />
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Account snapshot</CardTitle>
+            <CardTitle>Account snapshot</CardTitle>
             <CardDescription>Budget, spend, and operational connection status.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -53,10 +53,10 @@ export function AdsWorkspace({
             />
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Rollup</CardTitle>
-            <CardDescription>High-level performance summary for the current mock data adapter.</CardDescription>
+            <CardTitle>Rollup</CardTitle>
+            <CardDescription>High-level performance summary for the current adapter.</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable columns={["Entity", "Count", "Performance"]} rows={overviewRows} />
@@ -64,15 +64,13 @@ export function AdsWorkspace({
         </Card>
       </section>
 
-      <Card className="border-white/10 bg-black/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">
+          <CardTitle>
             {mode === "campaigns" ? "Campaigns" : mode === "adsets" ? "Ad Sets" : mode === "ads" ? "Ads" : "Daily insights"}
           </CardTitle>
           <CardDescription>
-            {mode === "overview"
-              ? "Daily metrics table"
-              : `Operational ${mode} view with status and performance placeholders.`}
+            {mode === "overview" ? "Daily metrics table" : `Operational ${mode} view with status and performance placeholders.`}
           </CardDescription>
         </CardHeader>
         <CardContent>

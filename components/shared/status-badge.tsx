@@ -12,6 +12,7 @@ const variantByValue: Record<string, "default" | "success" | "warning" | "danger
   warning: "warning",
   running: "info",
   new: "info",
+  nurturing: "warning",
   proposal: "warning",
   failed: "danger",
   revoked: "danger",
@@ -21,7 +22,11 @@ const variantByValue: Record<string, "default" | "success" | "warning" | "danger
   paused: "warning",
   qualified: "success",
   success: "success",
-  error: "danger"
+  error: "danger",
+  open: "info",
+  draft: "default",
+  degraded: "warning",
+  failing: "danger"
 };
 
 export function StatusBadge({ value }: { value: string }) {

@@ -92,6 +92,20 @@ export interface ConversationNote {
   createdAt: string;
 }
 
+export interface AutoResponderRule {
+  id: string;
+  name: string;
+  assetTypes: Array<"facebook_page" | "instagram_professional">;
+  trigger: "first_inbound_message" | "after_business_hours" | "keyword_match";
+  status: "active" | "paused" | "draft";
+  responseWindowLabel: string;
+  summary: string;
+  keywords: string[];
+  suppressWhenAssigned: boolean;
+  deliveryChannel: "direct_reply" | "handoff_note";
+  lastTriggeredAt: string;
+}
+
 export interface RawWebhookEvent {
   id: string;
   platform: "facebook" | "instagram" | "leadgen";
@@ -141,6 +155,19 @@ export interface LeadActivity {
   summary: string;
   createdAt: string;
   actor: string;
+}
+
+export interface LeadDestination {
+  id: string;
+  name: string;
+  destinationType: "website_endpoint" | "website_form";
+  status: "active" | "warning" | "paused";
+  websiteLabel: string;
+  destinationUrl: string;
+  mappedFields: string[];
+  retryPolicy: string;
+  lastDeliveredAt: string;
+  lastDeliveryOutcome: "success" | "warning" | "error";
 }
 
 export interface AdAccount {

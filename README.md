@@ -91,6 +91,7 @@ Apply the migration files in order:
 - `supabase/migrations/0001_core_schema.sql`
 - `supabase/migrations/0002_indexes_and_constraints.sql`
 - `supabase/migrations/0003_views_and_helper_functions.sql`
+- `supabase/migrations/0004_automation_and_lead_delivery.sql`
 
 These migrations create the required operational, archive, sync, and audit tables plus helper views.
 
@@ -108,3 +109,4 @@ These migrations create the required operational, archive, sync, and audit table
 - Add token encryption-at-rest
 - Activate real admin auth and MFA enforcement
 - Add queue-backed webhook normalization workers
+

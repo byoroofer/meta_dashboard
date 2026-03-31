@@ -1,7 +1,11 @@
 import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
 
 export async function getInboxData(conversationId?: string) {
-  const conversations = await dashboardRepository.getConversations();
+  const [conversations, autoResponderRules] = await Promise.all([
+    dashboardRepository.getConversations(),
+    dashboardRepository.getAutoResponderRules()
+  ]);
+
   const selectedConversation = conversationId
     ? await dashboardRepository.getConversationById(conversationId)
     : conversations[0] ?? null;
@@ -17,7 +21,8 @@ export async function getInboxData(conversationId?: string) {
     conversations,
     selectedConversation,
     threadMessages,
-    notes
+    notes,
+    autoResponderRules
   };
 }
 

@@ -22,9 +22,9 @@ export function AccountsWorkspace({
         description="Supported Meta business assets, granted scopes, sync health, token lifecycle visibility, and webhook status."
       />
       <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Connected businesses</CardTitle>
+            <CardTitle>Connected businesses</CardTitle>
             <CardDescription>Business-level connection state for the assets this dashboard can operate on.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -41,9 +41,9 @@ export function AccountsWorkspace({
             />
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Asset inventory</CardTitle>
+            <CardTitle>Asset inventory</CardTitle>
             <CardDescription>Pages, Instagram professional accounts, ad accounts, and lead forms only.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -61,10 +61,10 @@ export function AccountsWorkspace({
           </CardContent>
         </Card>
       </section>
-      <Card className="border-white/10 bg-black/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Recent account audit</CardTitle>
-          <CardDescription>Security-sensitive account lifecycle actions and automated archive tasks.</CardDescription>
+          <CardTitle>Recent account audit</CardTitle>
+          <CardDescription>Security-sensitive account lifecycle actions and archive-related operations.</CardDescription>
         </CardHeader>
         <CardContent>
           <DataTable

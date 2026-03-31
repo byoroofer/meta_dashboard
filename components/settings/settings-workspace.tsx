@@ -1,16 +1,22 @@
+import { Bot, Globe, LockKeyhole, ShieldCheck } from "lucide-react";
+
 import { DataTable } from "@/components/shared/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
-import type { AuditLog } from "@/types/domain";
+import type { AuditLog, AutoResponderRule, LeadDestination } from "@/types/domain";
 
 export function SettingsWorkspace({
   section,
-  auditLogs
+  auditLogs,
+  autoResponderRules,
+  leadDestinations
 }: {
   section: "general" | "security" | "audit";
   auditLogs: AuditLog[];
+  autoResponderRules: AutoResponderRule[];
+  leadDestinations: LeadDestination[];
 }) {
   const title = section === "security" ? "Security" : section === "audit" ? "Audit" : "Settings";
 
@@ -19,13 +25,16 @@ export function SettingsWorkspace({
       <PageHeader
         eyebrow="Admin controls"
         title={title}
-        description="Server-side security posture, role boundaries, token-handling placeholders, and audit visibility for production hardening."
+        description="Business Center-style settings for security posture, automation, website lead delivery, and audit visibility."
       />
 
-      <section className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
-        <Card className="border-white/10 bg-black/20">
+      <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Control framework</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-[var(--accent)]" />
+              Control framework
+            </CardTitle>
             <CardDescription>Core governance controls included in the scaffold from day one.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -36,25 +45,28 @@ export function SettingsWorkspace({
               "Audit helper for privileged actions",
               "Archive-first webhook processing design"
             ].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/90">
+              <div key={item} className="rounded-xl border border-[var(--border)] bg-slate-50 px-4 py-3 text-sm text-slate-800">
                 {item}
               </div>
             ))}
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Security notes</CardTitle>
-            <CardDescription>Production completion items before real Meta credentials and live operator access.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <LockKeyhole className="h-5 w-5 text-[var(--accent)]" />
+              Production completion notes
+            </CardTitle>
+            <CardDescription>Hardening work still required before live operator access and real Meta credentials.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              "Replace the demo admin session with Supabase Auth or your SSO provider.",
-              "Use real encryption-at-rest for long-lived Meta tokens, not plaintext storage.",
-              "Bind webhook signature verification to Meta's actual HMAC scheme before production.",
-              "Enable row-level access and audit append-only patterns in Supabase."
+              "Replace the demo session with Supabase Auth or your SSO provider.",
+              "Use real encryption-at-rest for long-lived Meta tokens.",
+              "Bind webhook signature verification to Meta's real HMAC flow before go-live.",
+              "Enable RLS and append-only audit patterns in Supabase."
             ].map((item) => (
-              <div key={item} className="rounded-2xl border border-amber-400/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
+              <div key={item} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                 {item}
               </div>
             ))}
@@ -62,11 +74,58 @@ export function SettingsWorkspace({
         </Card>
       </section>
 
+      {section !== "audit" ? (
+        <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-[var(--accent)]" />
+                Auto-responder rules
+              </CardTitle>
+              <CardDescription>Automation that acknowledges inbound business messages on supported Pages and professional accounts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={["Rule", "Trigger", "Status", "Channel", "Last triggered"]}
+                rows={autoResponderRules.map((rule) => [
+                  rule.name,
+                  rule.trigger.replaceAll("_", " "),
+                  <StatusBadge key={`${rule.id}-status`} value={rule.status} />,
+                  rule.deliveryChannel.replaceAll("_", " "),
+                  formatDateTime(rule.lastTriggeredAt)
+                ])}
+              />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-[var(--accent)]" />
+                Website lead delivery
+              </CardTitle>
+              <CardDescription>Destinations that receive normalized Meta lead records into website-owned intake systems.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <DataTable
+                columns={["Destination", "Type", "Status", "Last outcome", "Last delivered"]}
+                rows={leadDestinations.map((destination) => [
+                  destination.name,
+                  destination.destinationType.replaceAll("_", " "),
+                  <StatusBadge key={`${destination.id}-status`} value={destination.status} />,
+                  <StatusBadge key={`${destination.id}-outcome`} value={destination.lastDeliveryOutcome} />,
+                  formatDateTime(destination.lastDeliveredAt)
+                ])}
+              />
+            </CardContent>
+          </Card>
+        </section>
+      ) : null}
+
       {section === "audit" ? (
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Audit trail</CardTitle>
-            <CardDescription>Recent security and operational log entries from the mock adapter.</CardDescription>
+            <CardTitle>Audit trail</CardTitle>
+            <CardDescription>Recent security, archive, automation, and operational log entries from the current adapter.</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable

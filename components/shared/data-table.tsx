@@ -10,7 +10,7 @@ export function DataTable({
   rows: ReactNode[][];
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-black/20">
+    <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>

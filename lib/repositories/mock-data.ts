@@ -4,6 +4,7 @@ import type {
   AdInsightDaily,
   AdSet,
   AuditLog,
+  AutoResponderRule,
   Campaign,
   ConnectedAsset,
   ConnectedBusiness,
@@ -12,6 +13,7 @@ import type {
   ConversationNote,
   Lead,
   LeadActivity,
+  LeadDestination,
   LeadForm,
   Message,
   MessageArchiveRecord,
@@ -268,6 +270,48 @@ export const conversationNotes: ConversationNote[] = [
   }
 ];
 
+export const autoResponderRules: AutoResponderRule[] = [
+  {
+    id: "ar_001",
+    name: "After-hours acknowledgement",
+    assetTypes: ["facebook_page", "instagram_professional"],
+    trigger: "after_business_hours",
+    status: "active",
+    responseWindowLabel: "Within 10 seconds",
+    summary: "Sends a branded acknowledgement, ETA, and lead intake link when a new inbound message arrives outside staffed hours.",
+    keywords: [],
+    suppressWhenAssigned: true,
+    deliveryChannel: "direct_reply",
+    lastTriggeredAt: "2026-03-30T02:12:00.000Z"
+  },
+  {
+    id: "ar_002",
+    name: "Storm damage keyword flow",
+    assetTypes: ["facebook_page", "instagram_professional"],
+    trigger: "keyword_match",
+    status: "active",
+    responseWindowLabel: "Within 5 seconds",
+    summary: "Replies with inspection intake steps and routes the thread for human follow-up when hail, storm, leak, or emergency terms are detected.",
+    keywords: ["hail", "storm", "leak", "emergency"],
+    suppressWhenAssigned: true,
+    deliveryChannel: "direct_reply",
+    lastTriggeredAt: "2026-03-30T13:44:05.000Z"
+  },
+  {
+    id: "ar_003",
+    name: "First-touch Instagram greeting",
+    assetTypes: ["instagram_professional"],
+    trigger: "first_inbound_message",
+    status: "paused",
+    responseWindowLabel: "Within 15 seconds",
+    summary: "Greets first-time IG message senders and offers website estimate booking as the primary CTA.",
+    keywords: [],
+    suppressWhenAssigned: false,
+    deliveryChannel: "direct_reply",
+    lastTriggeredAt: "2026-03-28T17:21:00.000Z"
+  }
+];
+
 export const rawWebhookEvents: RawWebhookEvent[] = [
   {
     id: "evt_001",
@@ -382,6 +426,33 @@ export const leadActivities: LeadActivity[] = [
     summary: "Moved from new to qualified after claim number was confirmed.",
     createdAt: "2026-03-30T13:57:00.000Z",
     actor: "Jordan Perez"
+  }
+];
+
+export const leadDestinations: LeadDestination[] = [
+  {
+    id: "dest_001",
+    name: "Main quote intake endpoint",
+    destinationType: "website_endpoint",
+    status: "active",
+    websiteLabel: "byoroofer.com",
+    destinationUrl: "https://www.byoroofer.com/api/meta/leads",
+    mappedFields: ["full_name", "email", "phone", "campaign_name", "form_name"],
+    retryPolicy: "3 retries over 15 minutes",
+    lastDeliveredAt: "2026-03-30T14:00:35.000Z",
+    lastDeliveryOutcome: "success"
+  },
+  {
+    id: "dest_002",
+    name: "Emergency roof inspection form",
+    destinationType: "website_form",
+    status: "warning",
+    websiteLabel: "storm.byoroofer.com",
+    destinationUrl: "https://storm.byoroofer.com/inspection-request",
+    mappedFields: ["full_name", "phone", "damage_type", "postal_code"],
+    retryPolicy: "Immediate retry plus ops alert",
+    lastDeliveredAt: "2026-03-29T22:14:00.000Z",
+    lastDeliveryOutcome: "warning"
   }
 ];
 
@@ -507,6 +578,14 @@ export const syncJobs: SyncJob[] = [
     startedAt: "2026-03-30T14:15:00.000Z",
     completedAt: null,
     detail: "Waiting to hydrate campaign-level metrics for 2026-03-30."
+  },
+  {
+    id: "sync_003",
+    scope: "website-lead-delivery",
+    status: "queued",
+    startedAt: "2026-03-30T14:16:00.000Z",
+    completedAt: null,
+    detail: "Retrying one website form delivery after validation mismatch."
   }
 ];
 
@@ -540,5 +619,15 @@ export const auditLogs: AuditLog[] = [
     occurredAt: "2026-03-30T13:56:02.000Z",
     outcome: "success",
     detail: "Canonical archive snapshot hashed and persisted after inbound message normalization."
+  },
+  {
+    id: "audit_004",
+    actor: "Morgan Lee",
+    action: "auto_responder.update",
+    targetType: "auto_responder_rule",
+    targetId: "ar_002",
+    occurredAt: "2026-03-30T11:42:00.000Z",
+    outcome: "success",
+    detail: "Updated keyword flow copy to drive emergency traffic into the inspection intake path."
   }
 ];

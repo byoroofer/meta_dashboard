@@ -25,20 +25,20 @@ export function ContactsWorkspace({
       <PageHeader
         eyebrow="CRM history"
         title="Contacts"
-        description="Unified contact records linked across messaging, lead forms, notes, ownership, and pipeline stage."
+        description="Unified contact records linked across messaging, lead forms, ownership, and pipeline stage."
       />
-      <FilterBar searchPlaceholder="Search contacts, source, owner, tags" filters={["Qualified", "Proposal", "Won", "Tagged"]} />
+      <FilterBar searchPlaceholder="Search contacts, source, owner, and tags" filters={["Qualified", "Proposal", "Won", "Tagged"]} />
       <section className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-white">Contacts</CardTitle>
+            <CardTitle>Contacts</CardTitle>
             <CardDescription>Normalized CRM contacts created from supported Meta business interactions and forms.</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable
               columns={["Name", "Stage", "Owner", "Source", "Last activity"]}
               rows={contacts.map((contact) => [
-                <Link key={contact.id} href={`/contacts/${contact.id}`} className="font-medium text-white hover:text-[var(--accent)]">
+                <Link key={contact.id} href={`/contacts/${contact.id}`} className="font-medium text-slate-900 hover:text-[var(--accent-strong)]">
                   {contact.displayName}
                 </Link>,
                 <StatusBadge key={`${contact.id}-stage`} value={contact.stage} />,
@@ -49,25 +49,25 @@ export function ContactsWorkspace({
             />
           </CardContent>
         </Card>
-        <Card className="border-white/10 bg-black/20">
+        <Card>
           {selectedContact ? (
             <>
               <CardHeader>
-                <CardTitle className="text-white">{selectedContact.displayName}</CardTitle>
-                <CardDescription>{selectedContact.primaryEmail} · {selectedContact.primaryPhone}</CardDescription>
+                <CardTitle>{selectedContact.displayName}</CardTitle>
+                <CardDescription>{selectedContact.primaryEmail} - {selectedContact.primaryPhone}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
                 <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Owner</p>
-                    <p className="mt-2 text-sm font-medium text-white">{selectedContact.owner}</p>
+                  <div className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Owner</p>
+                    <p className="mt-2 text-sm font-medium text-slate-900">{selectedContact.owner}</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Source</p>
-                    <p className="mt-2 text-sm font-medium text-white">{selectedContact.source}</p>
+                  <div className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Source</p>
+                    <p className="mt-2 text-sm font-medium text-slate-900">{selectedContact.source}</p>
                   </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">Stage</p>
+                  <div className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Stage</p>
                     <div className="mt-2">
                       <StatusBadge value={selectedContact.stage} />
                     </div>
@@ -75,12 +75,12 @@ export function ContactsWorkspace({
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Linked conversations</h3>
+                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Linked conversations</h3>
                     {linkedConversations.length ? (
                       <div className="space-y-3">
                         {linkedConversations.map((conversation) => (
-                          <div key={conversation.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                            <p className="text-sm font-medium text-white">{conversation.subject}</p>
+                          <div key={conversation.id} className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                            <p className="text-sm font-semibold text-slate-900">{conversation.subject}</p>
                             <p className="mt-2 text-sm text-[var(--muted)]">{conversation.preview}</p>
                           </div>
                         ))}
@@ -90,12 +90,12 @@ export function ContactsWorkspace({
                     )}
                   </div>
                   <div>
-                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--muted)]">Linked leads</h3>
+                    <h3 className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Linked leads</h3>
                     {linkedLeads.length ? (
                       <div className="space-y-3">
                         {linkedLeads.map((lead) => (
-                          <div key={lead.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                            <p className="text-sm font-medium text-white">{lead.campaignName}</p>
+                          <div key={lead.id} className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
+                            <p className="text-sm font-semibold text-slate-900">{lead.campaignName}</p>
                             <p className="mt-2 text-sm text-[var(--muted)]">{lead.adName}</p>
                           </div>
                         ))}

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, ShieldCheck } from "lucide-react";
+import { Bell, ChevronRight, ShieldCheck } from "lucide-react";
 
 import { Avatar } from "@/components/ui/avatar";
 import { primaryNavigation, secondaryNavigation } from "@/lib/navigation";
@@ -13,16 +13,17 @@ export function AppSidebar({ user }: { user: AppUser }) {
   const pathname = usePathname();
 
   return (
-    <aside className="app-shell-panel flex flex-col rounded-[28px] border border-white/10 p-5">
-      <div className="flex items-center justify-between">
+    <aside className="app-shell-panel flex flex-col rounded-3xl border border-[var(--border)] bg-white p-4">
+      <div className="flex items-start justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--accent-soft)]/60 p-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-[var(--accent)]">Meta Dashboard</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">Business ops console</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">Meta Dashboard</p>
+          <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-slate-950">Business Center</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Unified operations for messaging, leads, ads, archive, and connected assets.</p>
         </div>
-        <PanelLeftClose className="h-5 w-5 text-[var(--muted)]" />
+        <Bell className="h-5 w-5 text-[var(--accent-strong)]" />
       </div>
 
-      <nav className="mt-8 space-y-2">
+      <nav className="mt-5 space-y-1.5">
         {primaryNavigation.map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
           const Icon = item.icon;
@@ -32,44 +33,49 @@ export function AppSidebar({ user }: { user: AppUser }) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm transition-colors",
-                isActive ? "bg-white text-slate-950" : "text-[var(--muted)] hover:bg-white/6 hover:text-white"
+                "flex items-center justify-between rounded-xl px-3.5 py-3 text-sm font-medium transition-colors",
+                isActive
+                  ? "app-nav-active"
+                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
               )}
             >
-              <Icon className="h-4 w-4" />
-              {item.label}
+              <span className="flex items-center gap-3">
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </span>
+              <ChevronRight className={cn("h-4 w-4", isActive ? "text-[var(--accent-strong)]" : "text-slate-400")} />
             </Link>
           );
         })}
       </nav>
 
-      <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-4">
-        <div className="flex items-center gap-3">
-          <ShieldCheck className="h-4 w-4 text-cyan-200" />
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-100">Preservation path</p>
+      <div className="mt-5 rounded-2xl border border-[var(--border)] bg-slate-50 p-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-[var(--accent-strong)]" />
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-800">Automation path</p>
         </div>
-        <ol className="mt-3 space-y-2 text-sm text-cyan-50/90">
-          <li>1. Raw webhook stored first</li>
-          <li>2. Normalize operational tables</li>
-          <li>3. Hash canonical archive snapshot</li>
+        <ol className="mt-3 space-y-2 text-sm text-[var(--muted)]">
+          <li>1. Capture every raw event.</li>
+          <li>2. Auto-respond within supported business channels.</li>
+          <li>3. Feed qualified leads into website intake endpoints.</li>
         </ol>
       </div>
 
-      <div className="mt-auto space-y-3 pt-8">
-        <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Security shortcuts</p>
+      <div className="mt-auto space-y-3 pt-6">
+        <div className="rounded-2xl border border-[var(--border)] bg-slate-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Quick access</p>
           <div className="mt-3 space-y-2">
             {secondaryNavigation.map((item) => (
-              <Link key={item.href} href={item.href} className="block text-sm text-white/90 hover:text-white">
+              <Link key={item.href} href={item.href} className="block text-sm text-slate-800 hover:text-[var(--accent-strong)]">
                 {item.label}
               </Link>
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-white p-4">
           <Avatar name={user.fullName} />
           <div>
-            <p className="text-sm font-medium text-white">{user.fullName}</p>
+            <p className="text-sm font-medium text-slate-950">{user.fullName}</p>
             <p className="text-xs text-[var(--muted)]">{user.role}</p>
           </div>
         </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import { AlertTriangle, Search } from "lucide-react";
+import { AlertTriangle, CircleHelp, Search, Sparkles } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pageTitles } from "@/lib/navigation";
 import type { AppUser } from "@/types/domain";
@@ -19,27 +20,35 @@ export function AppHeader({ user, requiresMfaEnrollment }: { user: AppUser; requ
   const pathname = usePathname();
 
   return (
-    <header className="space-y-4">
+    <header className="space-y-3">
       {requiresMfaEnrollment ? (
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-400/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
+        <div className="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           <AlertTriangle className="h-4 w-4" />
-          MFA enrollment is scaffolded but not yet enforced. Keep this flagged before production rollout.
+          MFA enrollment is still a placeholder. Keep security hardening open before production cutover.
         </div>
       ) : null}
-      <div className="app-shell-panel flex flex-col gap-4 rounded-[28px] border border-white/10 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="app-shell-panel flex flex-col gap-4 rounded-3xl border border-[var(--border)] bg-white px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-[var(--muted)]">Meta Dashboard</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em] text-white">{resolveTitle(pathname)}</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">Meta Dashboard</p>
+          <h1 className="mt-1 text-[28px] font-semibold tracking-[-0.03em] text-slate-950">{resolveTitle(pathname)}</h1>
         </div>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative min-w-[280px]">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
-            <Input className="pl-10" placeholder="Search conversations, contacts, leads, assets" />
+          <div className="relative min-w-[320px]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-soft)]" />
+            <Input className="pl-10" placeholder="Search inbox, leads, contacts, assets" />
           </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
+          <Button variant="secondary" className="justify-start bg-slate-50 text-slate-800">
+            <Sparkles className="mr-2 h-4 w-4 text-[var(--accent)]" />
+            Automation
+          </Button>
+          <Button variant="outline">
+            <CircleHelp className="mr-2 h-4 w-4" />
+            Help
+          </Button>
+          <div className="flex items-center gap-3 rounded-2xl border border-[var(--border)] bg-slate-50 px-3 py-2">
             <Avatar name={user.fullName} className="h-9 w-9 text-[10px]" />
             <div>
-              <p className="text-sm text-white">{user.fullName}</p>
+              <p className="text-sm text-slate-950">{user.fullName}</p>
               <p className="text-xs text-[var(--muted)]">{user.email}</p>
             </div>
           </div>

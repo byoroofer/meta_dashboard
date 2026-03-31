@@ -2,13 +2,24 @@ import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
 import type { OverviewMetric } from "@/types/domain";
 
 export async function getOverviewData() {
-  const [conversations, leads, adAccounts, rawEvents, syncJobs, connectedAssets] = await Promise.all([
+  const [
+    conversations,
+    leads,
+    adAccounts,
+    rawEvents,
+    syncJobs,
+    connectedAssets,
+    autoResponderRules,
+    leadDestinations
+  ] = await Promise.all([
     dashboardRepository.getConversations(),
     dashboardRepository.getLeads(),
     dashboardRepository.getAdAccounts(),
     dashboardRepository.getRawWebhookEvents(),
     dashboardRepository.getSyncJobs(),
-    dashboardRepository.getConnectedAssets()
+    dashboardRepository.getConnectedAssets(),
+    dashboardRepository.getAutoResponderRules(),
+    dashboardRepository.getLeadDestinations()
   ]);
 
   const metrics: OverviewMetric[] = [
@@ -31,9 +42,9 @@ export async function getOverviewData() {
       tone: "neutral"
     },
     {
-      label: "Webhook events",
-      value: `${rawEvents.length}`,
-      delta: `${rawEvents.filter((item) => item.processingStatus === "processed").length} processed cleanly`,
+      label: "Active auto responders",
+      value: `${autoResponderRules.filter((item) => item.status === "active").length}`,
+      delta: `${leadDestinations.filter((item) => item.status === "active").length} website destinations live`,
       tone: "positive"
     }
   ];
@@ -47,9 +58,9 @@ export async function getOverviewData() {
     },
     {
       id: "alert_002",
-      title: "MFA enrollment pending",
-      body: "The scaffolded admin session is marked as requiring MFA enrollment before production cutover.",
-      tone: "neutral"
+      title: "Website lead delivery requires review",
+      body: "One website destination is reporting validation mismatch warnings and needs field-map QA before production traffic increases.",
+      tone: "warning"
     }
   ];
 
@@ -57,7 +68,9 @@ export async function getOverviewData() {
     metrics,
     syncJobs,
     connectedAssets,
+    autoResponderRules,
+    leadDestinations,
+    rawEvents,
     alerts
   };
 }
-
