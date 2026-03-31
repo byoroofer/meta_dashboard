@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+:root {
+  --background: #09111f;
+  --background-soft: #101a2d;
+  --panel: rgba(11, 21, 37, 0.9);
+  --panel-strong: rgba(8, 15, 26, 0.96);
+  --border: rgba(148, 163, 184, 0.16);
+  --text: #ecf3ff;
+  --muted: #97a7c2;
+  --accent: #53d2c1;
+  --accent-strong: #f7b955;
+  --danger: #fb7185;
+  --success: #34d399;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(83, 210, 193, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(247, 185, 85, 0.12), transparent 24%),
+    linear-gradient(180deg, #09111f 0%, #0f1728 45%, #08101c 100%);
+}
+
+body {
+  min-height: 100vh;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-heading), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::selection {
+  background: rgba(83, 210, 193, 0.35);
+  color: white;
+}
+
+.app-shell-panel {
+  background: var(--panel);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.28);
+}
+
+.data-grid {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
