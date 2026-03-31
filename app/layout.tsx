@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Manrope, IBM_Plex_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { Toaster } from "sonner";
 
 import "@/app/globals.css";
+import { TrackingProvider } from "@/components/privacy/tracking-provider";
+import { env } from "@/lib/config/env";
 
 const headingFont = Manrope({
   subsets: ["latin"],
@@ -25,6 +28,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" suppressHydrationWarning>
       <body className={`${headingFont.variable} ${monoFont.variable} antialiased`}>
         {children}
+        <Suspense fallback={null}>
+          <TrackingProvider
+            policyVersion={env.NEXT_PUBLIC_PRIVACY_POLICY_VERSION}
+            privacyPolicyPath={env.NEXT_PUBLIC_PRIVACY_POLICY_PATH}
+          />
+        </Suspense>
         <Toaster richColors position="top-right" />
       </body>
     </html>

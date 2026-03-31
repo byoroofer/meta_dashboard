@@ -3,6 +3,8 @@ import { z } from "zod";
 const envSchema = z.object({
   NEXT_PUBLIC_APP_NAME: z.string().default("Meta Dashboard"),
   NEXT_PUBLIC_APP_URL: z.string().default("http://localhost:3000"),
+  NEXT_PUBLIC_PRIVACY_POLICY_VERSION: z.string().default("2026-03-31"),
+  NEXT_PUBLIC_PRIVACY_POLICY_PATH: z.string().default("/privacy"),
   SUPABASE_URL: z.string().default(""),
   SUPABASE_ANON_KEY: z.string().default(""),
   SUPABASE_SERVICE_ROLE_KEY: z.string().default(""),
@@ -19,6 +21,8 @@ const envSchema = z.object({
 export const env = envSchema.parse({
   NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+  NEXT_PUBLIC_PRIVACY_POLICY_VERSION: process.env.NEXT_PUBLIC_PRIVACY_POLICY_VERSION,
+  NEXT_PUBLIC_PRIVACY_POLICY_PATH: process.env.NEXT_PUBLIC_PRIVACY_POLICY_PATH,
   SUPABASE_URL: process.env.SUPABASE_URL,
   SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,

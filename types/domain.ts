@@ -44,6 +44,205 @@ export interface Contact {
   owner: string;
   tags: string[];
   lastActivityAt: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  alternatePhone?: string | null;
+  companyName?: string | null;
+  jobTitle?: string | null;
+  street1?: string | null;
+  street2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  postalCode?: string | null;
+  country?: string | null;
+  leadStatus?: string | null;
+  pipelineStage?: string | null;
+  lifecycleStage?: string | null;
+  leadScore?: number;
+  priorityLevel?: string | null;
+  preferredContactMethod?: "sms" | "call" | "email" | null;
+  preferredContactTime?: string | null;
+  doNotCall?: boolean;
+  doNotEmail?: boolean;
+  doNotSms?: boolean;
+  marketingOptIn?: boolean;
+  firstTouchSource?: string | null;
+  firstTouchCampaign?: string | null;
+  lastTouchSource?: string | null;
+  lastTouchCampaign?: string | null;
+  latestSessionId?: string | null;
+  latestVisitorId?: string | null;
+  segment?: string | null;
+  notes?: string | null;
+  customAttributes?: Record<string, unknown>;
+}
+
+export interface VisitorProfile {
+  id: string;
+  anonymousId: string;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  isReturning: boolean;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  browserName?: string | null;
+  browserVersion?: string | null;
+  osName?: string | null;
+  osVersion?: string | null;
+  deviceType?: "mobile" | "tablet" | "desktop" | string | null;
+  deviceBrand?: string | null;
+  deviceModel?: string | null;
+  screenWidth?: number | null;
+  screenHeight?: number | null;
+  viewportWidth?: number | null;
+  viewportHeight?: number | null;
+  language?: string | null;
+  timezone?: string | null;
+  geoCountry?: string | null;
+  geoRegion?: string | null;
+  geoCity?: string | null;
+  geoPostalCode?: string | null;
+  contactId?: string | null;
+  blocked: boolean;
+  suspicious: boolean;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TrackedSession {
+  id: string;
+  visitorId?: string | null;
+  contactId?: string | null;
+  sessionToken: string;
+  startedAt: string;
+  endedAt?: string | null;
+  durationSeconds?: number | null;
+  entryUrl?: string | null;
+  entryPath?: string | null;
+  exitUrl?: string | null;
+  exitPath?: string | null;
+  referrer?: string | null;
+  referrerDomain?: string | null;
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  term?: string | null;
+  content?: string | null;
+  sourceChannel?: string | null;
+  fbclid?: string | null;
+  fbc?: string | null;
+  fbp?: string | null;
+  gclid?: string | null;
+  msclkid?: string | null;
+  ttclid?: string | null;
+  landingPage?: string | null;
+  landingHost?: string | null;
+  landingQuery?: string | null;
+  pageViewCount: number;
+  eventCount: number;
+  ctaClickCount: number;
+  formStarted: boolean;
+  formSubmitted: boolean;
+  converted: boolean;
+  convertedAt?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  browserName?: string | null;
+  osName?: string | null;
+  deviceType?: string | null;
+  language?: string | null;
+  timezone?: string | null;
+  sessionQuality?: "low" | "normal" | "high_intent" | string | null;
+  sessionFlags: string[];
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PageViewRecord {
+  id: string;
+  sessionId: string;
+  visitorId?: string | null;
+  contactId?: string | null;
+  viewedAt: string;
+  url: string;
+  path: string;
+  title?: string | null;
+  referrer?: string | null;
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  dwellSeconds?: number | null;
+  scrollPercent?: number | null;
+  isEntry: boolean;
+  isExit: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ConsentRecord {
+  id: string;
+  visitorId?: string | null;
+  contactId?: string | null;
+  sessionId?: string | null;
+  policyVersion: string;
+  consentSource: "cookie_banner" | "form_checkbox" | "preference_center" | "server_default";
+  consentAction: "accept_all" | "reject_all" | "save_preferences" | "revoke";
+  necessary: boolean;
+  analytics: boolean;
+  marketing: boolean;
+  consentedAt: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  proof?: Record<string, unknown>;
+}
+
+export interface AttributionTouch {
+  id: string;
+  visitorId?: string | null;
+  contactId?: string | null;
+  sessionId?: string | null;
+  touchType: "first_touch" | "last_touch" | "assist" | "conversion_touch";
+  touchedAt: string;
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  term?: string | null;
+  content?: string | null;
+  channel?: string | null;
+  referrer?: string | null;
+  landingPage?: string | null;
+  fbclid?: string | null;
+  fbc?: string | null;
+  fbp?: string | null;
+  gclid?: string | null;
+  msclkid?: string | null;
+  ttclid?: string | null;
+  adPlatform?: "meta" | "google" | "microsoft" | "tiktok" | "unknown" | string | null;
+  adAccountId?: string | null;
+  campaignId?: string | null;
+  adsetId?: string | null;
+  adId?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TrackedEvent {
+  id: string;
+  sessionId?: string | null;
+  visitorId?: string | null;
+  contactId?: string | null;
+  eventName: string;
+  eventCategory?: string | null;
+  eventLabel?: string | null;
+  eventValue?: number | null;
+  occurredAt: string;
+  path?: string | null;
+  url?: string | null;
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  consentState?: Record<string, unknown>;
+  properties?: Record<string, unknown>;
 }
 
 export interface Conversation {
@@ -84,12 +283,62 @@ export interface Message {
   attachments: MessageAttachment[];
 }
 
+export interface CommunicationLog {
+  id: string;
+  contactId: string;
+  sessionId?: string | null;
+  conversationId?: string | null;
+  messageId?: string | null;
+  direction: "inbound" | "outbound";
+  channel:
+    | "sms"
+    | "email"
+    | "phone"
+    | "chat"
+    | "messenger"
+    | "instagram"
+    | "facebook"
+    | "website_form"
+    | "meta_lead";
+  subject?: string | null;
+  messageText?: string | null;
+  externalMessageId?: string | null;
+  externalThreadId?: string | null;
+  deliveredAt?: string | null;
+  openedAt?: string | null;
+  clickedAt?: string | null;
+  repliedAt?: string | null;
+  status?: "queued" | "sent" | "delivered" | "failed" | "received" | "read" | null;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface ConversationNote {
   id: string;
   conversationId: string;
   author: string;
   body: string;
   createdAt: string;
+}
+
+export interface ContactNote {
+  id: string;
+  contactId: string;
+  authorUserId?: string | null;
+  noteBody: string;
+  isPinned: boolean;
+  createdAt: string;
+}
+
+export interface ContactSegment {
+  id: string;
+  contactId: string;
+  createdByUserId?: string | null;
+  segmentName: string;
+  segmentReason?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  endedAt?: string | null;
 }
 
 export interface AutoResponderRule {
@@ -133,6 +382,33 @@ export interface LeadForm {
   status: "active" | "paused";
 }
 
+export interface FormSubmission {
+  id: string;
+  contactId?: string | null;
+  visitorId?: string | null;
+  sessionId?: string | null;
+  leadFormId?: string | null;
+  formName: string;
+  formVersion?: string | null;
+  submissionChannel: "website_form" | "meta_lead_form" | "manual_entry" | "api";
+  submittedAt: string;
+  pageUrl?: string | null;
+  pagePath?: string | null;
+  submissionStatus: "submitted" | "partial" | "abandoned" | "invalid" | "spam";
+  isMarketingLead: boolean;
+  rawPayload?: Record<string, unknown>;
+  normalizedPayload?: Record<string, unknown>;
+  source?: string | null;
+  medium?: string | null;
+  campaign?: string | null;
+  sourceChannel?: string | null;
+  referrer?: string | null;
+  fbclid?: string | null;
+  fbc?: string | null;
+  fbp?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
 export interface Lead {
   id: string;
   contactId: string;
@@ -146,6 +422,12 @@ export interface Lead {
   status: "new" | "qualified" | "nurturing" | "won" | "lost";
   owner: string;
   createdAt: string;
+  visitorProfileId?: string | null;
+  sessionId?: string | null;
+  formSubmissionId?: string | null;
+  sourceChannel?: string | null;
+  sourcePlatform?: string | null;
+  convertedAt?: string | null;
 }
 
 export interface LeadActivity {
