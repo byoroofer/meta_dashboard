@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 
-import { createAuditLogEntry } from "@/lib/audit/log";
-import { buildRawEventRecord, describeWebhookProcessing, readRawRequestBody, verifyMetaSignature, verifyWebhookChallenge } from "@/lib/meta/webhooks";
+import {
+  buildRawEventRecord,
+  describeWebhookProcessing,
+  headersToObject,
+  readRawRequestBody,
+  verifyMetaSignature,
+  verifyWebhookChallenge
+} from "@/lib/meta/webhooks";
+import { persistInboundWebhookEvent } from "@/lib/meta/message-preservation";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -20,26 +27,38 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const rawBody = await readRawRequestBody(request);
-  const signature = request.headers.get("x-hub-signature-256");
-  const signatureValid = verifyMetaSignature(rawBody, signature);
-
+  const signatureHeader = request.headers.get("x-hub-signature-256");
+  const signatureValid = verifyMetaSignature(rawBody, signatureHeader);
   const rawEvent = buildRawEventRecord(rawBody);
-  const audit = createAuditLogEntry({
-    actor: "system:webhook",
-    action: "webhook.ingest",
-    targetType: "raw_webhook_event",
-    targetId: rawEvent.dedupeKey,
-    outcome: signatureValid ? "success" : "warning",
-    detail: "Webhook scaffold accepted the raw payload and generated canonical archive metadata."
+  const persistence = await persistInboundWebhookEvent({
+    rawEvent,
+    rawBody,
+    headers: headersToObject(request.headers),
+    signatureHeader,
+    signatureValid
   });
+
+  if (!signatureValid) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Invalid webhook signature.",
+        data: {
+          dedupeKey: rawEvent.dedupeKey,
+          persistence,
+          processingStages: describeWebhookProcessing()
+        }
+      },
+      { status: 401 }
+    );
+  }
 
   return NextResponse.json({
     success: true,
     data: {
       dedupeKey: rawEvent.dedupeKey,
-      signatureValid,
       processingStages: describeWebhookProcessing(),
-      audit
+      persistence
     }
   });
 }

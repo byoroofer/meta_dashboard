@@ -17,17 +17,25 @@ Private internal business dashboard for supported Meta business and professional
 - `types/`: domain, API, Meta, and database typing
 - `supabase/migrations/`: paste-ready SQL schema, indexes, views, and helper functions
 
-The current scaffold uses typed mock repositories so the UI and route handlers are stable before live Meta and Supabase credentials are connected.
+The UI still uses typed mock repositories for page rendering, but the webhook and outbound send routes now include a real server-side persistence path when `SUPABASE_SERVICE_ROLE_KEY` is configured.
 
-## Core Preservation Model
+## Message Copy System
 
-1. Receive raw webhook payload
-2. Persist raw payload exactly as received
-3. Verify signature and dedupe event
-4. Normalize operational entities
-5. Build canonical archive snapshot
-6. Hash archive record
-7. Write audit/process trail
+Inbound copy path:
+
+1. Receive raw Meta webhook
+2. Persist `raw_webhook_events` before normalization
+3. Verify signature and dedupe
+4. Normalize supported messaging events into `conversations` and `messages`
+5. Persist `message_archive` snapshot hashes
+6. Write audit trail records
+
+Outbound copy path:
+
+1. Receive outbound send request
+2. Persist outbound `messages` row before live transport dispatch
+3. Persist archive snapshot for the outbound copy
+4. Return queued transport placeholder for later Meta send hookup
 
 ## Environment Setup
 
@@ -66,21 +74,9 @@ http://localhost:3000
 
 ## Build and Verification
 
-Run the type check:
-
 ```powershell
 cmd /c npm run typecheck
-```
-
-Run the linter:
-
-```powershell
 cmd /c npm run lint
-```
-
-Run the production build:
-
-```powershell
 cmd /c npm run build
 ```
 
@@ -92,8 +88,9 @@ Apply the migration files in order:
 - `supabase/migrations/0002_indexes_and_constraints.sql`
 - `supabase/migrations/0003_views_and_helper_functions.sql`
 - `supabase/migrations/0004_automation_and_lead_delivery.sql`
+- `supabase/migrations/0005_message_copy_constraints.sql`
 
-These migrations create the required operational, archive, sync, and audit tables plus helper views.
+These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, and message-copy dedupe structures.
 
 ## Deployment
 
@@ -102,11 +99,10 @@ These migrations create the required operational, archive, sync, and audit table
 - Add the same environment variables in Vercel Project Settings
 - Do not expose Meta or Supabase privileged keys to client code
 
-## Next Phase
+## Remaining Integration Work
 
-- Replace the mock repository with Supabase-backed adapters
-- Implement real Meta webhook HMAC verification
-- Add token encryption-at-rest
+- Replace the mock page data adapters with live Supabase reads
+- Hook outbound transport to the actual Meta business messaging send APIs
+- Expand webhook normalization for additional Meta event shapes beyond the current supported message path
+- Add queue-backed retries and dead-letter handling for failed normalizations
 - Activate real admin auth and MFA enforcement
-- Add queue-backed webhook normalization workers
-

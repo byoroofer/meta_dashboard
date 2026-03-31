@@ -33,6 +33,7 @@ export const env = envSchema.parse({
 });
 
 export const hasSupabaseConfig = Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY);
+export const hasSupabaseAdminConfig = Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY);
 export const hasMetaConfig = Boolean(
   env.META_APP_ID &&
     env.META_APP_SECRET &&
