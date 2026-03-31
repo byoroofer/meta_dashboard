@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CircleHelp, Search, Sparkles } from "lucide-react";
+import { AlertTriangle, CircleHelp, PanelsTopLeft, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -35,11 +35,11 @@ export function AppHeader({ user, requiresMfaEnrollment }: { user: AppUser; requ
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative min-w-[320px]">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted-soft)]" />
-            <Input className="pl-10" placeholder="Search inbox, leads, contacts, assets" />
+            <Input className="pl-10" placeholder="Search inbox, leads, contacts, targets, commands" />
           </div>
           <Button variant="secondary" className="justify-start bg-slate-50 text-slate-800">
-            <Sparkles className="mr-2 h-4 w-4 text-[var(--accent)]" />
-            Automation
+            <PanelsTopLeft className="mr-2 h-4 w-4 text-[var(--accent)]" />
+            Portal actions
           </Button>
           <Button variant="outline">
             <CircleHelp className="mr-2 h-4 w-4" />

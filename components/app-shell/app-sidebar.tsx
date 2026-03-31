@@ -18,7 +18,7 @@ export function AppSidebar({ user }: { user: AppUser }) {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">Meta Dashboard</p>
           <h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-slate-950">Business Center</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Unified operations for messaging, leads, ads, archive, and connected assets.</p>
+          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Operational portal for Meta assets, client websites, databases, and internal business systems.</p>
         </div>
         <Bell className="h-5 w-5 text-[var(--accent-strong)]" />
       </div>
@@ -52,12 +52,12 @@ export function AppSidebar({ user }: { user: AppUser }) {
       <div className="mt-5 rounded-2xl border border-[var(--border)] bg-slate-50 p-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-[var(--accent-strong)]" />
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-800">Automation path</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-800">Portal path</p>
         </div>
         <ol className="mt-3 space-y-2 text-sm text-[var(--muted)]">
-          <li>1. Capture every raw event.</li>
-          <li>2. Auto-respond within supported business channels.</li>
-          <li>3. Feed qualified leads into website intake endpoints.</li>
+          <li>1. Capture and preserve Meta activity.</li>
+          <li>2. Route operators and automation from one portal.</li>
+          <li>3. Dispatch safe commands to websites, databases, tables, and Meta.</li>
         </ol>
       </div>
 

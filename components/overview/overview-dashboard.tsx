@@ -1,4 +1,4 @@
-import { Activity, Globe, MessageSquareReply, Shield, Webhook } from "lucide-react";
+import { Activity, Globe, PanelsTopLeft, Shield, Webhook } from "lucide-react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { MetricCard } from "@/components/shared/metric-card";
@@ -8,7 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatDateTime } from "@/lib/utils";
 import type {
   AutoResponderRule,
+  CommandExecution,
+  CommandTemplate,
   ConnectedAsset,
+  IntegrationTarget,
   LeadDestination,
   OverviewMetric,
   RawWebhookEvent,
@@ -22,6 +25,9 @@ export function OverviewDashboard({
   autoResponderRules,
   leadDestinations,
   rawEvents,
+  integrationTargets,
+  commandTemplates,
+  commandExecutions,
   alerts
 }: {
   metrics: OverviewMetric[];
@@ -30,6 +36,9 @@ export function OverviewDashboard({
   autoResponderRules: AutoResponderRule[];
   leadDestinations: LeadDestination[];
   rawEvents: RawWebhookEvent[];
+  integrationTargets: IntegrationTarget[];
+  commandTemplates: CommandTemplate[];
+  commandExecutions: CommandExecution[];
   alerts: { id: string; title: string; body: string; tone: "neutral" | "warning" }[];
 }) {
   return (
@@ -37,7 +46,7 @@ export function OverviewDashboard({
       <PageHeader
         eyebrow="Operations center"
         title="Overview"
-        description="Meta-style business workspace for messaging, lead capture, website delivery, ads visibility, and archive integrity."
+        description="Portal control plane for Meta business assets, client websites, databases, and operational tables, with preserved messaging and API-ready dispatch boundaries."
       />
 
       <section className="grid gap-4 xl:grid-cols-4">
@@ -50,17 +59,17 @@ export function OverviewDashboard({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Webhook className="h-5 w-5 text-[var(--accent)]" />
-              Message preservation pipeline
+              <PanelsTopLeft className="h-5 w-5 text-[var(--accent)]" />
+              Portal command center
             </CardTitle>
-            <CardDescription>Operational flow follows the same admin-first logic throughout the product: receive, preserve, normalize, route, archive.</CardDescription>
+            <CardDescription>The dashboard is structured as the operator portal that can dispatch controlled commands into Meta, websites, databases, and internal tables.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-2">
             {[
-              { icon: Webhook, title: "Receive", body: "Capture the raw webhook payload before any mutation or validation step." },
-              { icon: Activity, title: "Normalize", body: "Project business-safe records into inbox, contacts, leads, and reporting tables." },
-              { icon: MessageSquareReply, title: "Respond", body: "Apply auto-responder rules only on supported Pages and professional accounts." },
-              { icon: Shield, title: "Archive", body: "Hash the canonical message snapshot and retain the event-processing trail." }
+              { icon: Webhook, title: "Meta actions", body: "Queue supported business replies, refresh asset sync, and coordinate inbound event handling through server routes." },
+              { icon: Globe, title: "Website actions", body: "Push qualified leads, trigger booking flows, and send structured payloads into company websites." },
+              { icon: Activity, title: "Database actions", body: "Prepare controlled stage updates and sync commands for client CRM or analytics databases." },
+              { icon: Shield, title: "Table actions", body: "Run safe internal table mutations like requeues, status changes, and archival bookkeeping." }
             ].map((item) => (
               <div key={item.title} className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">
                 <item.icon className="h-5 w-5 text-[var(--accent)]" />
@@ -74,7 +83,7 @@ export function OverviewDashboard({
         <Card>
           <CardHeader>
             <CardTitle>Attention queue</CardTitle>
-            <CardDescription>Operational tasks that look like Meta Business Suite to-dos: sync, routing, automation, and delivery exceptions.</CardDescription>
+            <CardDescription>Operational tasks that need review before live command dispatch expands across client systems.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {alerts.map((alert) => (
@@ -88,6 +97,45 @@ export function OverviewDashboard({
                 </div>
               </div>
             ))}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Integration targets</CardTitle>
+            <CardDescription>Every live or planned destination the portal will command.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={["Target", "Type", "Status", "Connection", "Heartbeat"]}
+              rows={integrationTargets.map((target) => [
+                target.name,
+                target.targetType.replaceAll("_", " "),
+                <StatusBadge key={`${target.id}-status`} value={target.status} />,
+                target.connectionLabel,
+                formatDateTime(target.lastHeartbeatAt)
+              ])}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Command templates</CardTitle>
+            <CardDescription>Ready-to-wire command contracts the portal can dispatch when APIs and credentials are connected.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={["Command", "Target type", "Status", "Approval", "Last used"]}
+              rows={commandTemplates.map((template) => [
+                template.name,
+                template.targetType.replaceAll("_", " "),
+                <StatusBadge key={`${template.id}-status`} value={template.status} />,
+                template.requiresApproval ? "required" : "not required",
+                formatDateTime(template.lastUsedAt)
+              ])}
+            />
           </CardContent>
         </Card>
       </section>
@@ -137,17 +185,19 @@ export function OverviewDashboard({
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Sync jobs</CardTitle>
-            <CardDescription>Queue placeholders for webhook processing, reporting syncs, and website delivery retries.</CardDescription>
+            <CardTitle>Command executions</CardTitle>
+            <CardDescription>Recent portal actions across Meta, website, database, and table targets.</CardDescription>
           </CardHeader>
           <CardContent>
             <DataTable
-              columns={["Scope", "Status", "Started", "Detail"]}
-              rows={syncJobs.map((job) => [
-                job.scope,
-                <StatusBadge key={`${job.id}-status`} value={job.status} />,
-                formatDateTime(job.startedAt),
-                job.detail
+              columns={["Command", "Target", "Status", "Requested by", "Requested", "Result"]}
+              rows={commandExecutions.map((execution) => [
+                execution.commandLabel,
+                execution.targetName,
+                <StatusBadge key={`${execution.id}-status`} value={execution.status} />,
+                execution.requestedBy,
+                formatDateTime(execution.requestedAt),
+                execution.resultSummary
               ])}
             />
           </CardContent>
@@ -173,24 +223,43 @@ export function OverviewDashboard({
         </Card>
       </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent raw events</CardTitle>
-          <CardDescription>Raw event browsing remains available so inbound business activity is always recoverable.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={["Platform", "Type", "Status", "Received", "Dedupe key"]}
-            rows={rawEvents.map((event) => [
-              event.platform,
-              event.eventType,
-              <StatusBadge key={`${event.id}-status`} value={event.processingStatus} />,
-              formatDateTime(event.receivedAt),
-              event.dedupeKey
-            ])}
-          />
-        </CardContent>
-      </Card>
+      <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Sync jobs</CardTitle>
+            <CardDescription>Queue placeholders for webhook processing, portal dispatch, reporting syncs, and website delivery retries.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={["Scope", "Status", "Started", "Detail"]}
+              rows={syncJobs.map((job) => [
+                job.scope,
+                <StatusBadge key={`${job.id}-status`} value={job.status} />,
+                formatDateTime(job.startedAt),
+                job.detail
+              ])}
+            />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent raw events</CardTitle>
+            <CardDescription>Raw event browsing remains available so inbound business activity is always recoverable.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DataTable
+              columns={["Platform", "Type", "Status", "Received", "Dedupe key"]}
+              rows={rawEvents.map((event) => [
+                event.platform,
+                event.eventType,
+                <StatusBadge key={`${event.id}-status`} value={event.processingStatus} />,
+                formatDateTime(event.receivedAt),
+                event.dedupeKey
+              ])}
+            />
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

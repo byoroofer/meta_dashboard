@@ -10,7 +10,10 @@ export async function getOverviewData() {
     syncJobs,
     connectedAssets,
     autoResponderRules,
-    leadDestinations
+    leadDestinations,
+    integrationTargets,
+    commandTemplates,
+    commandExecutions
   ] = await Promise.all([
     dashboardRepository.getConversations(),
     dashboardRepository.getLeads(),
@@ -19,7 +22,10 @@ export async function getOverviewData() {
     dashboardRepository.getSyncJobs(),
     dashboardRepository.getConnectedAssets(),
     dashboardRepository.getAutoResponderRules(),
-    dashboardRepository.getLeadDestinations()
+    dashboardRepository.getLeadDestinations(),
+    dashboardRepository.getIntegrationTargets(),
+    dashboardRepository.getCommandTemplates(),
+    dashboardRepository.getCommandExecutions()
   ]);
 
   const metrics: OverviewMetric[] = [
@@ -42,9 +48,9 @@ export async function getOverviewData() {
       tone: "neutral"
     },
     {
-      label: "Active auto responders",
-      value: `${autoResponderRules.filter((item) => item.status === "active").length}`,
-      delta: `${leadDestinations.filter((item) => item.status === "active").length} website destinations live`,
+      label: "Portal commands",
+      value: `${commandTemplates.filter((item) => item.status === "active").length}`,
+      delta: `${integrationTargets.filter((item) => item.status === "active").length} active targets live`,
       tone: "positive"
     }
   ];
@@ -58,8 +64,8 @@ export async function getOverviewData() {
     },
     {
       id: "alert_002",
-      title: "Website lead delivery requires review",
-      body: "One website destination is reporting validation mismatch warnings and needs field-map QA before production traffic increases.",
+      title: "Client database mapping pending",
+      body: "The portal can target the client CRM database, but field-level write contracts still need approval before live dispatch.",
       tone: "warning"
     }
   ];
@@ -71,6 +77,9 @@ export async function getOverviewData() {
     autoResponderRules,
     leadDestinations,
     rawEvents,
+    integrationTargets,
+    commandTemplates,
+    commandExecutions,
     alerts
   };
 }

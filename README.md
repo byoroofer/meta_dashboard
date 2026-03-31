@@ -8,16 +8,17 @@ Private internal business dashboard for supported Meta business and professional
 - Meta ad account reporting
 - CRM contact history
 - Raw webhook and message archive preservation
+- Portal command dispatch into websites, databases, internal tables, and Meta business assets
 
 ## Architecture Summary
 
 - `app/`: Next.js App Router pages, route groups, and server route handlers
 - `components/`: shared shell, feature workspaces, and `shadcn/ui`-style primitives
-- `lib/`: auth, config, Meta integration boundaries, archive helpers, audit helpers, repositories, and services
+- `lib/`: auth, config, Meta integration boundaries, archive helpers, audit helpers, repositories, services, and portal orchestration scaffolding
 - `types/`: domain, API, Meta, and database typing
 - `supabase/migrations/`: paste-ready SQL schema, indexes, views, and helper functions
 
-The UI still uses typed mock repositories for page rendering, but the webhook and outbound send routes now include a real server-side persistence path when `SUPABASE_SERVICE_ROLE_KEY` is configured.
+The UI still uses typed mock repositories for page rendering, but the webhook and outbound send routes now include a real server-side persistence path when `SUPABASE_SERVICE_ROLE_KEY` is configured. The portal layer is also scaffolded so command dispatch can later target Meta, client websites, databases, and internal operational tables from one admin surface.
 
 ## Message Copy System
 
@@ -36,6 +37,22 @@ Outbound copy path:
 2. Persist outbound `messages` row before live transport dispatch
 3. Persist archive snapshot for the outbound copy
 4. Return queued transport placeholder for later Meta send hookup
+
+## Portal Command System
+
+The dashboard is being prepared as an operator portal that can dispatch controlled commands to:
+
+- Connected Meta business assets
+- Client websites and website APIs
+- Client databases
+- Internal operational tables in Supabase
+
+Current scaffolded portal surfaces:
+
+- Integration targets inventory
+- Command templates
+- Command execution history
+- Dispatch placeholder API routes ready for live integration wiring
 
 ## Environment Setup
 
@@ -89,8 +106,9 @@ Apply the migration files in order:
 - `supabase/migrations/0003_views_and_helper_functions.sql`
 - `supabase/migrations/0004_automation_and_lead_delivery.sql`
 - `supabase/migrations/0005_message_copy_constraints.sql`
+- `supabase/migrations/0006_portal_command_center.sql`
 
-These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, and message-copy dedupe structures.
+These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, message-copy dedupe, and portal command-center structures.
 
 ## Deployment
 
@@ -103,6 +121,7 @@ These migrations create the required operational, archive, sync, audit, auto-res
 
 - Replace the mock page data adapters with live Supabase reads
 - Hook outbound transport to the actual Meta business messaging send APIs
+- Finalize target-specific adapters for website, database, and table command dispatch
 - Expand webhook normalization for additional Meta event shapes beyond the current supported message path
-- Add queue-backed retries and dead-letter handling for failed normalizations
+- Add queue-backed retries and dead-letter handling for failed normalizations and failed command executions
 - Activate real admin auth and MFA enforcement

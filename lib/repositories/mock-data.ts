@@ -6,11 +6,14 @@ import type {
   AuditLog,
   AutoResponderRule,
   Campaign,
+  CommandExecution,
+  CommandTemplate,
   ConnectedAsset,
   ConnectedBusiness,
   Contact,
   Conversation,
   ConversationNote,
+  IntegrationTarget,
   Lead,
   LeadActivity,
   LeadDestination,
@@ -456,6 +459,135 @@ export const leadDestinations: LeadDestination[] = [
   }
 ];
 
+export const integrationTargets: IntegrationTarget[] = [
+  {
+    id: "target_001",
+    name: "Byo Roofer Facebook Page",
+    targetType: "meta_asset",
+    status: "active",
+    connectionLabel: "facebook page",
+    summary: "Primary business messaging target for inbound DMs, comments workflows, and outbound reply orchestration.",
+    capabilities: ["sync_messages", "send_reply", "refresh_profile"],
+    lastHeartbeatAt: "2026-03-30T14:10:00.000Z"
+  },
+  {
+    id: "target_002",
+    name: "Byo Roofer Main Website",
+    targetType: "website",
+    status: "active",
+    connectionLabel: "HTTPS API",
+    summary: "Receives qualified leads, booking commands, and status updates into the public website intake system.",
+    capabilities: ["push_lead", "sync_booking_status", "trigger_form_prefill"],
+    lastHeartbeatAt: "2026-03-30T14:07:00.000Z"
+  },
+  {
+    id: "target_003",
+    name: "Client CRM Postgres",
+    targetType: "database",
+    status: "warning",
+    connectionLabel: "postgres",
+    summary: "Destination for lead and contact sync once schema mappings and credentials are finalized.",
+    capabilities: ["insert_contact", "update_pipeline_stage", "run_sync_job"],
+    lastHeartbeatAt: "2026-03-30T13:12:00.000Z"
+  },
+  {
+    id: "target_004",
+    name: "Operational Lead Table",
+    targetType: "table",
+    status: "active",
+    connectionLabel: "supabase table",
+    summary: "Internal normalized lead table used for routing, enrichment, and website dispatch decisions.",
+    capabilities: ["append_row", "mark_status", "requeue_delivery"],
+    lastHeartbeatAt: "2026-03-30T14:11:00.000Z"
+  }
+];
+
+export const commandTemplates: CommandTemplate[] = [
+  {
+    id: "cmd_tpl_001",
+    name: "Send business reply",
+    targetType: "meta_asset",
+    commandKey: "meta.send_business_reply",
+    status: "active",
+    summary: "Queue a supported outbound message from the portal to a connected Meta business asset.",
+    requiresApproval: false,
+    inputShapeLabel: "conversationId, body, actorLabel",
+    lastUsedAt: "2026-03-30T13:48:00.000Z"
+  },
+  {
+    id: "cmd_tpl_002",
+    name: "Push lead to website",
+    targetType: "website",
+    commandKey: "website.push_lead",
+    status: "active",
+    summary: "Deliver a normalized lead payload from the portal into a client website endpoint or form workflow.",
+    requiresApproval: true,
+    inputShapeLabel: "leadId, destinationId, payloadOverride?",
+    lastUsedAt: "2026-03-30T14:00:35.000Z"
+  },
+  {
+    id: "cmd_tpl_003",
+    name: "Update client database stage",
+    targetType: "database",
+    commandKey: "database.update_pipeline_stage",
+    status: "draft",
+    summary: "Apply a controlled stage/status mutation into a connected client database once mappings are approved.",
+    requiresApproval: true,
+    inputShapeLabel: "recordId, nextStage, targetSchema",
+    lastUsedAt: "2026-03-29T17:24:00.000Z"
+  },
+  {
+    id: "cmd_tpl_004",
+    name: "Requeue website delivery",
+    targetType: "table",
+    commandKey: "table.requeue_delivery",
+    status: "active",
+    summary: "Requeue a failed website delivery from the portal against the normalized lead delivery tables.",
+    requiresApproval: false,
+    inputShapeLabel: "deliveryEventId",
+    lastUsedAt: "2026-03-30T14:16:00.000Z"
+  }
+];
+
+export const commandExecutions: CommandExecution[] = [
+  {
+    id: "cmd_exec_001",
+    commandTemplateId: "cmd_tpl_002",
+    targetId: "target_002",
+    targetName: "Byo Roofer Main Website",
+    commandLabel: "Push lead to website",
+    requestedBy: "Morgan Lee",
+    requestedAt: "2026-03-30T14:00:30.000Z",
+    completedAt: "2026-03-30T14:00:35.000Z",
+    status: "succeeded",
+    resultSummary: "Lead 001 accepted by website intake endpoint."
+  },
+  {
+    id: "cmd_exec_002",
+    commandTemplateId: "cmd_tpl_004",
+    targetId: "target_004",
+    targetName: "Operational Lead Table",
+    commandLabel: "Requeue website delivery",
+    requestedBy: "System",
+    requestedAt: "2026-03-30T14:16:00.000Z",
+    completedAt: null,
+    status: "running",
+    resultSummary: "Retry worker is replaying one failed website form delivery."
+  },
+  {
+    id: "cmd_exec_003",
+    commandTemplateId: "cmd_tpl_001",
+    targetId: "target_001",
+    targetName: "Byo Roofer Facebook Page",
+    commandLabel: "Send business reply",
+    requestedBy: "Jordan Perez",
+    requestedAt: "2026-03-30T13:48:00.000Z",
+    completedAt: "2026-03-30T13:48:02.000Z",
+    status: "succeeded",
+    resultSummary: "Outbound reply logged in portal and handed off to Meta send pipeline placeholder."
+  }
+];
+
 export const adAccounts: AdAccount[] = [
   {
     id: "adacct_001",
@@ -586,6 +718,14 @@ export const syncJobs: SyncJob[] = [
     startedAt: "2026-03-30T14:16:00.000Z",
     completedAt: null,
     detail: "Retrying one website form delivery after validation mismatch."
+  },
+  {
+    id: "sync_004",
+    scope: "portal-command-dispatch",
+    status: "running",
+    startedAt: "2026-03-30T14:17:00.000Z",
+    completedAt: null,
+    detail: "Portal command queue monitoring Meta, website, and database targets."
   }
 ];
 
@@ -629,5 +769,15 @@ export const auditLogs: AuditLog[] = [
     occurredAt: "2026-03-30T11:42:00.000Z",
     outcome: "success",
     detail: "Updated keyword flow copy to drive emergency traffic into the inspection intake path."
+  },
+  {
+    id: "audit_005",
+    actor: "Morgan Lee",
+    action: "portal.command_dispatch",
+    targetType: "integration_target",
+    targetId: "target_002",
+    occurredAt: "2026-03-30T14:00:35.000Z",
+    outcome: "success",
+    detail: "Portal pushed a normalized lead into the website intake endpoint."
   }
 ];

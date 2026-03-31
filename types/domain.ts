@@ -170,6 +170,42 @@ export interface LeadDestination {
   lastDeliveryOutcome: "success" | "warning" | "error";
 }
 
+export interface IntegrationTarget {
+  id: string;
+  name: string;
+  targetType: "meta_asset" | "website" | "database" | "table";
+  status: "active" | "warning" | "paused";
+  connectionLabel: string;
+  summary: string;
+  capabilities: string[];
+  lastHeartbeatAt: string;
+}
+
+export interface CommandTemplate {
+  id: string;
+  name: string;
+  targetType: IntegrationTarget["targetType"];
+  commandKey: string;
+  status: "active" | "draft" | "paused";
+  summary: string;
+  requiresApproval: boolean;
+  inputShapeLabel: string;
+  lastUsedAt: string;
+}
+
+export interface CommandExecution {
+  id: string;
+  commandTemplateId: string;
+  targetId: string;
+  targetName: string;
+  commandLabel: string;
+  requestedBy: string;
+  requestedAt: string;
+  completedAt: string | null;
+  status: "queued" | "running" | "succeeded" | "failed";
+  resultSummary: string;
+}
+
 export interface AdAccount {
   id: string;
   name: string;
