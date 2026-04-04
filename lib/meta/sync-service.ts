@@ -413,7 +413,8 @@ export async function syncMetaData() {
       .update({
         status: "succeeded",
         completed_at: new Date().toISOString(),
-        detail: `Imported ${counts.businesses} businesses, ${counts.assets} assets, ${counts.adAccounts} ad accounts, ${counts.campaigns} campaigns, ${counts.adsets} ad sets, ${counts.ads} ads, ${counts.insights} insight rows, ${counts.leadForms} lead forms, and ${counts.leads} leads.`
+        detail: `Imported ${counts.businesses} businesses, ${counts.assets} assets, ${counts.adAccounts} ad accounts, ${counts.campaigns} campaigns, ${counts.adsets} ad sets, ${counts.ads} ads, ${counts.insights} insight rows, ${counts.leadForms} lead forms, and ${counts.leads} leads.`,
+        metadata: counts
       })
       .eq("id", syncJob.data.id);
 

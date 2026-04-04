@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleDollarSign, Globe, Route, UserRoundSearch } from "lucide-react";
+import { CircleDollarSign, Globe, Route, UserRound, UserRoundSearch } from "lucide-react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -123,7 +123,7 @@ export function LeadsWorkspace({
             </>
           ) : (
             <CardContent className="pt-6">
-              <EmptyState title="No lead selected" description="Choose a lead to inspect attribution, ownership, and website delivery targets." />
+              <EmptyState icon={UserRound} title="No lead selected" description="Choose a lead to inspect attribution, ownership, and website delivery targets." />
             </CardContent>
           )}
         </Card>

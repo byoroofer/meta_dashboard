@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, MessageSquareReply, Paperclip, Send, UserPlus } from "lucide-react";
+import { Bot, MessageSquare, MessageSquareReply, Paperclip, Send, UserPlus } from "lucide-react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -136,7 +136,7 @@ export function InboxWorkspace({
             </>
           ) : (
             <CardContent className="pt-6">
-              <EmptyState title="No conversation selected" description="Choose a thread to review message history, attachments, auto-response posture, and internal notes." />
+              <EmptyState icon={MessageSquare} title="No conversation selected" description="Choose a thread to review message history, attachments, auto-response posture, and internal notes." />
             </CardContent>
           )}
         </Card>

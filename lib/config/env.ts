@@ -48,3 +48,17 @@ export const hasMetaConfig = Boolean(
     env.META_WEBHOOK_VERIFY_TOKEN &&
     env.META_WEBHOOK_APP_SECRET
 );
+export const hasMetaSystemUser = Boolean(env.META_SYSTEM_USER_ACCESS_TOKEN);
+
+/** Full status of every runtime config gate, safe to pass to server components. No secret values included. */
+export function getConfigStatus() {
+  return {
+    supabasePublic: Boolean(env.SUPABASE_URL && env.SUPABASE_ANON_KEY),
+    supabaseAdmin: Boolean(env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY),
+    metaAppCredentials: Boolean(env.META_APP_ID && env.META_APP_SECRET),
+    metaWebhook: Boolean(env.META_WEBHOOK_VERIFY_TOKEN && env.META_WEBHOOK_APP_SECRET),
+    metaSystemUser: Boolean(env.META_SYSTEM_USER_ACCESS_TOKEN),
+    encryptionKey: Boolean(env.ENCRYPTION_KEY),
+    adminPassword: Boolean(env.DASHBOARD_ADMIN_PASSWORD)
+  };
+}

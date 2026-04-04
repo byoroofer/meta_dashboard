@@ -4,30 +4,43 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export function DataTable({
   columns,
-  rows
+  rows,
+  emptyLabel = "No records found"
 }: {
   columns: string[];
   rows: ReactNode[][];
+  emptyLabel?: string;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-white">
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="hover:bg-transparent">
               {columns.map((column) => (
                 <TableHead key={column}>{column}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row, index) => (
-              <TableRow key={index}>
-                {row.map((cell, cellIndex) => (
-                  <TableCell key={cellIndex}>{cell}</TableCell>
-                ))}
+            {rows.length === 0 ? (
+              <TableRow className="hover:bg-transparent">
+                <TableCell
+                  colSpan={columns.length}
+                  className="py-10 text-center text-sm text-[var(--muted)]"
+                >
+                  {emptyLabel}
+                </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              rows.map((row, index) => (
+                <TableRow key={index}>
+                  {row.map((cell, cellIndex) => (
+                    <TableCell key={cellIndex}>{cell}</TableCell>
+                  ))}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
