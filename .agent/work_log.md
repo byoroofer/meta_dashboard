@@ -2,6 +2,36 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-03T02:30:00-05:00 | UI premium upgrade and Meta integration diagnostics
+
+- Task: Upgrade the dashboard interface to look premium/production-grade; add Meta integration health diagnostics so operators know exactly what's blocking live data.
+- Context: Prior session confirmed the backend import path is structurally sound but returns zero businesses. This session focused on visual quality and adding operator-facing diagnostic surfaces.
+- Files changed:
+  - `app/globals.css` — richer CSS tokens (shadow-card, shadow-panel, accent-subtle, metric tone classes, stronger nav-active left-bar, radial gradient background)
+  - `components/shared/metric-card.tsx` — tone-aware colored top borders + trend icons (TrendingUp/Down/Minus) and tinted delta text
+  - `components/shared/data-table.tsx` — centered empty-state row when no data, instead of blank table
+  - `components/shared/empty-state.tsx` — icon slot with icon-in-ring visual, centered layout
+  - `components/shared/filter-bar.tsx` — interactive active-filter highlight state
+  - `components/shared/page-header.tsx` — bolder eyebrow, tighter spacing
+  - `components/app-shell/app-sidebar.tsx` — gradient brand header, active-nav left accent bar + filled dot, secondary-nav with icons, session indicator dot on user card
+  - `components/app-shell/app-header.tsx` — compact single-row layout, icon buttons for Bell/Help, loading spinner in scope switcher
+  - `components/app-shell/account-switcher.tsx` — context label shows current scope vs. all vs. no-data warning, active scope tinted, per-select chevron icons
+  - `components/app-shell/logout-button.tsx` — smaller/lighter to fit compact header
+  - `components/ui/card.tsx` — shadow-card upgrade, CardTitle bold/sm, CardDescription tighter
+  - `components/ui/badge.tsx` — rounded-md style, bolder tracking
+  - `components/inbox/inbox-workspace.tsx` — EmptyState icon (MessageSquare)
+  - `components/leads/leads-workspace.tsx` — EmptyState icon (UserRound)
+  - `components/meta/meta-sync-button.tsx` — full integration health panel: per-variable config rows, verdict badge, last-sync detail, targeted guidance for no_businesses case
+  - `lib/config/env.ts` — add hasMetaSystemUser flag and getConfigStatus() without leaking secret values
+  - `lib/meta/sync-service.ts` — persist import counts into sync_jobs.metadata column
+  - `app/api/meta/status/route.ts` (new) — GET endpoint returning config status, last sync job, and verdict enum (ready / no_businesses / missing_config / never_run)
+- Commands run: `npx tsc --noEmit` (0 errors); `npx eslint .` (0 errors); `git add -A && git commit`
+- Errors encountered: None.
+- Fix or decision: All changes landed cleanly. Typecheck and lint pass. Committed as `044500a`.
+- Rationale: The dashboard needed to feel trustworthy and production-grade to be useful as an internal business tool. The diagnostic surface was critical for the next operator to self-diagnose the Meta connection blockage without reading code.
+- Rollback plan: `git revert 044500a` or `git reset --hard 548819c` to return to the pre-session baseline checkpoint.
+- Next steps: Fix Meta system user business/asset assignment in Meta Business Settings, then re-sync from the Connected Accounts page using the upgraded sync button.
+
 ## 2026-04-03T00:20:18-05:00 | Link Supabase CLI, push remote schema, and rerun live Meta import
 
 - Task: Authenticate the Supabase CLI with the provided personal access token, link the workspace to project `gnxznznucmrcbriohqdl`, apply the repo migrations remotely, and retry the production Meta import.

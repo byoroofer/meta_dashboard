@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-03T02:30:00-05:00 | UI premium upgrade and Meta integration diagnostics
+
+- Change summary: Upgraded 18 files for visual/UX quality (shell, shared components, sidebar, header, account switcher, metric cards, data tables, empty states, filter bar, badges) and added a Meta integration health route + sync button diagnostics panel. Persisted import counts into sync_jobs.metadata. Added getConfigStatus() to env.ts without exposing secret values.
+- Commits: `548819c` (baseline checkpoint of prior session's work), `044500a` (this session's changes)
+- Reversal steps:
+  1. `git revert 044500a` to undo this session's UI and diagnostic changes, keeping prior work intact.
+  2. Or `git reset --hard 548819c` to return to the exact pre-session state (use only if 044500a changes should be completely abandoned).
+  3. Delete `app/api/meta/status/route.ts` if the diagnostic endpoint should not be exposed.
+  4. Revert `lib/meta/sync-service.ts` if persisting counts to sync_jobs.metadata causes any schema conflict.
+- Notes: All changes are purely additive and UI/diagnostic in nature. No schema migrations were applied this session. Typecheck and lint passed cleanly.
+
 ## 2026-04-03T00:20:18-05:00 | Supabase remote migration push and production import retry
 
 - Change summary: Logged the Supabase CLI in with a personal access token, linked the workspace to the remote project, fixed the helper-function migration to use `extensions.digest(...)`, pushed the remaining migrations to the live database, and confirmed the production Meta import now runs successfully but returns zero businesses.

@@ -1,5 +1,15 @@
 # Open Issues
 
+## OPEN-2026-04-03-08 | README migration list is behind actual migration state
+
+- Status: open
+- Area: documentation
+- Summary: The README documents migrations 0001–0006. The repo now has 0007–0010 and the remote Supabase schema has been pushed through 0010. The README setup instructions will miss required tables if followed literally.
+- Impact: Fresh environments or new operators following only the README will deploy incomplete schema.
+- Next action: Update README's "Database migrations" section to list all migrations through 0010 and note that migrations are pushed via `supabase db push --linked`.
+
+
+
 Purpose: track unresolved technical risks, bugs, debt, and documentation drift. Mark items resolved in place instead of deleting them.
 
 ## OPEN-2026-04-02-06 | Production Supabase schema is missing importer tables

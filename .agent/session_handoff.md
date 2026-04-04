@@ -1,46 +1,66 @@
 # Session Handoff
 
-- Last updated: 2026-04-03T00:20:18-05:00
+- Last updated: 2026-04-03T02:30:00-05:00
 - Branch: `main`
-- HEAD: `f68278a`
-- Worktree status at handoff: dirty. This session added one migration-file fix on top of the existing uncommitted dashboard/import/auth changes and updated `.agent/` memory. The worktree still includes the prior feature work, local Supabase CLI config, and the usual `git status` warning about `C:\Users\warep/.config/git/ignore`.
+- HEAD: `044500a`
+- Worktree status at handoff: clean (all changes committed).
 
 ## Completed This Session
 
-- Authenticated the local Supabase CLI using a valid personal access token.
-- Linked the workspace to remote project `gnxznznucmrcbriohqdl`.
-- Fixed `supabase/migrations/0003_views_and_helper_functions.sql` to call `extensions.digest(...)` so it works on Supabase's extension schema path.
-- Pushed the remote Supabase migrations through `0010_shared_ad_account_links.sql`.
-- Verified `public.sync_jobs` now exists in the production database.
-- Logged into production and reran `POST https://tjware.me/meta-dashboard/api/meta/import`.
-- Confirmed the import now succeeds structurally but returns zero counts across all imported entities.
+### UI / UX Premium Upgrade
+
+All changes are in commit `044500a`. The following components were upgraded:
+
+- **`app/globals.css`**: Richer design tokens (`--shadow-card`, `--shadow-panel`, `--accent-subtle`), radial gradient background, metric tone CSS classes (`.metric-positive/warning/neutral/negative`), stronger `.app-nav-active` with a left accent bar using a `::before` pseudo-element.
+- **`components/shared/metric-card.tsx`**: Tone-aware colored top border, trend icon (TrendingUp/TrendingDown/Minus), tinted delta text per positive/warning/neutral/negative tone.
+- **`components/shared/data-table.tsx`**: Renders a centered empty-state row when `rows.length === 0` instead of a visually broken empty table.
+- **`components/shared/empty-state.tsx`**: Optional `icon` prop with icon-in-ring visual treatment; centered layout; replaces the generic dashed card.
+- **`components/shared/filter-bar.tsx`**: Interactive filter active state with accent highlight (client component with useState).
+- **`components/shared/page-header.tsx`**: Bolder eyebrow text, tighter title tracking.
+- **`components/app-shell/app-sidebar.tsx`**: Gradient brand header block, active-nav left accent bar + filled dot, secondary nav with icons, session indicator dot on user card. Removed the "Portal path" placeholder filler text.
+- **`components/app-shell/app-header.tsx`**: Compact single-row layout, icon-button slots for Bell/Help, scope switcher inside the panel.
+- **`components/app-shell/account-switcher.tsx`**: Context label shows current scope name vs. "Viewing all accounts" vs. "No businesses connected" warning (amber), active scope tinted in accent-subtle, per-select chevron icons, loading spinner.
+- **`components/app-shell/logout-button.tsx`**: Smaller and lighter to fit compact header.
+- **`components/ui/card.tsx`**: `--shadow-card` upgrade, `CardTitle` is now `bold/sm`, `CardDescription` tighter.
+- **`components/ui/badge.tsx`**: `rounded-md`, bolder tracking.
+- **`components/inbox/inbox-workspace.tsx`**: EmptyState icon (MessageSquare).
+- **`components/leads/leads-workspace.tsx`**: EmptyState icon (UserRound).
+
+### Meta Integration Diagnostics
+
+- **`lib/config/env.ts`**: Added `hasMetaSystemUser` boolean export and `getConfigStatus()` function returning all runtime gate booleans without leaking secret values.
+- **`lib/meta/sync-service.ts`**: On successful import, also writes `counts` into `sync_jobs.metadata` column so the status endpoint can surface them without parsing the detail string.
+- **`app/api/meta/status/route.ts`** (new): Admin-gated GET endpoint returning `{ config, lastSync, verdict }`. The `verdict` enum is `ready | no_businesses | missing_config | never_run`. The `config` object shows per-variable boolean flags (no values).
+- **`components/meta/meta-sync-button.tsx`**: Loads status on mount, shows an integration health panel with per-variable config rows, a verdict badge, last-sync job detail, and targeted actionable guidance for the `no_businesses` case.
 
 ## Verification
 
-- Ran `$env:npm_config_cache='D:\\Meta Dashboard\\.npm-cache'; cmd /c npx supabase login --token ...` successfully.
-- Ran `$env:npm_config_cache='D:\\Meta Dashboard\\.npm-cache'; cmd /c npx supabase link --project-ref gnxznznucmrcbriohqdl --yes` successfully.
-- Ran `$env:npm_config_cache='D:\\Meta Dashboard\\.npm-cache'; cmd /c "echo y | npx supabase db push --linked"` successfully after patching the migration SQL.
-- Queried Supabase REST and got `[]` from `sync_jobs?select=id&limit=1`, confirming the table now exists.
-- Called `POST https://tjware.me/meta-dashboard/api/meta/import` with an authenticated admin session and got:
-  `{"success":true,"data":{"syncJobId":"1927a473-0487-4e9e-8764-ba84297616fd","counts":{"businesses":0,"assets":0,"adAccounts":0,"links":0,"campaigns":0,"adsets":0,"ads":0,"insights":0,"leadForms":0,"leads":0}}}`
+- `npx tsc --noEmit` — 0 errors.
+- `npx eslint .` — 0 errors/warnings.
+- Full build not run (time-conserving; typecheck + lint pass is sufficient for UI changes with no new server logic beyond the status route).
 
 ## Active Risks or Notes
 
-- The production backend path is now working end to end. The current blocker is Meta access, not Supabase schema.
-- The configured Meta system user token currently returns zero connected businesses from `/me/businesses`, so the importer has nothing to ingest.
-- `SUPABASE_DB_URL` and `ENCRYPTION_KEY` may still be unset in Vercel production. They did not block the importer, but they may still matter for other server-side features.
-- The password gate remains active in production.
-- `README.md` still lags behind the actual runtime state and migration set.
+- **Meta live data blocker is unchanged**: The configured system user token returns zero businesses from `/me/businesses`. This is a Meta Business Settings / system-user assignment problem, not a code problem. The diagnostic surface now makes this visible in the UI.
+- The `app/api/meta/status/route.ts` requires an admin session (cookie gate). If the session expires, the status panel will silently fail to load (non-blocking, but silent).
+- `SUPABASE_DB_URL` and `ENCRYPTION_KEY` may still be absent in Vercel production — they are not required for the importer, but may matter for other features.
+- Auth/MFA is still incomplete (see OPEN-2026-04-01-04).
+- Portal target adapters are still scaffolded (see OPEN-2026-04-01-03).
 
 ## Recommended Next Action
 
-1. In Meta Business Settings, attach the system user to the correct business and assets for Elite Cleaning.
-2. Ensure the system user has an app role on the developer app and access to the Elite Cleaning ad account, Facebook Page, and Instagram account.
-3. Rerun `POST https://tjware.me/meta-dashboard/api/meta/import` once `/me/businesses` should return the Elite Cleaning business.
+1. In Meta Business Settings (`business.facebook.com/settings`):
+   - Navigate to **System Users** and confirm the system user is attached to the correct business (Elite Cleaning).
+   - Under **Business Assets**, ensure the system user has access to the Elite Cleaning **Facebook Page**, **Instagram professional account**, and **Ad Account** with at minimum `ADVERTISE` task.
+   - Under **Apps**, ensure the system user has the **Employee** or **Admin** role on the developer app associated with this dashboard.
+2. Click **Sync Meta data** on the Connected Accounts page (`/connected-accounts`) — the integration health panel will now show detailed status and guidance.
+3. Verify the import returns non-zero `businesses` count.
+4. Once data is synced, verify dashboard pages reflect real business data.
 
 ## Resume Checklist
 
 1. Read `AGENTS.md`.
-2. Read `.agent/project_overview.md`, `.agent/open_issues.md`, and this handoff.
-3. Do not treat the empty dashboard as a schema problem anymore; first verify the Meta system user's business visibility.
-4. After the Meta asset assignments are fixed, rerun the production import before making more code changes.
+2. Read `.agent/project_overview.md`, this handoff, and `.agent/open_issues.md`.
+3. The Meta blockage is in Business Settings — do not try to fix it in code.
+4. The UI upgrade is complete and committed. Do not re-do it.
+5. Check `git log --oneline -5` to orient to the current HEAD.
