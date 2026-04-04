@@ -189,11 +189,22 @@ export async function syncMetaData() {
           counts.assets += 1;
         }
 
-        // Lead forms require a Page Access Token. In fallback mode the page
-        // object includes access_token from /me/accounts; use it if present.
+        // Lead forms and leads require leads_retrieval permission on the page
+        // token. This may not be granted; skip gracefully if forbidden so the
+        // rest of the import (pages, ad accounts, campaigns, insights) succeeds.
         const leadFormClient =
           useFallback && page.access_token ? meta.withPageToken(page.access_token) : meta;
-        const leadForms = await leadFormClient.getLeadForms(page.id);
+        let leadForms: Awaited<ReturnType<typeof meta.getLeadForms>> = [];
+        try {
+          leadForms = await leadFormClient.getLeadForms(page.id);
+        } catch (leadFormError) {
+          const msg = leadFormError instanceof Error ? leadFormError.message : "";
+          if (msg.includes("403") || msg.includes("190") || msg.includes("200")) {
+            // Permission not granted — skip leads for this page, continue import
+          } else {
+            throw leadFormError;
+          }
+        }
 
         for (const form of leadForms) {
           const formUpsert = await client
@@ -213,7 +224,18 @@ export async function syncMetaData() {
           if (formUpsert.error) throw formUpsert.error;
           counts.leadForms += 1;
           const formId = str((formUpsert.data as Row).id);
-          const leads = await leadFormClient.getLeads(form.id);
+
+          let leads: Awaited<ReturnType<typeof leadFormClient.getLeads>> = [];
+          try {
+            leads = await leadFormClient.getLeads(form.id);
+          } catch (leadsError) {
+            const msg = leadsError instanceof Error ? leadsError.message : "";
+            if (msg.includes("403") || msg.includes("200")) {
+              // Permission not granted — skip leads for this form
+            } else {
+              throw leadsError;
+            }
+          }
 
           for (const lead of leads) {
             const fullName = extractLeadValue(lead.field_data, ["full_name", "name", "full name"]);
