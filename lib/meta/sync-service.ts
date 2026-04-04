@@ -91,7 +91,18 @@ export async function syncMetaData() {
   };
 
   try {
-    const businesses = await meta.getConnectedBusinesses();
+    let businesses = await meta.getConnectedBusinesses();
+
+    // If the system user has direct asset access but is not a business portfolio
+    // member (common when assets are assigned without business membership), fall
+    // back to a synthetic single-business entry derived from the system user's
+    // directly accessible pages and ad accounts.
+    const useFallback = businesses.length === 0;
+
+    if (useFallback) {
+      // Use a stable synthetic business ID so re-imports don't create duplicates.
+      businesses = [{ id: "direct_asset_access", name: "Direct Asset Access" }];
+    }
 
     for (const business of businesses) {
       const businessUpsert = await client
@@ -115,7 +126,9 @@ export async function syncMetaData() {
       counts.businesses += 1;
       const businessId = str((businessUpsert.data as Row).id);
 
-      const pages = await meta.getBusinessPages(business.id);
+      const pages = useFallback
+        ? await meta.getDirectPages()
+        : await meta.getBusinessPages(business.id);
       const linkableAssetIds: string[] = [];
 
       for (const page of pages) {
@@ -226,7 +239,9 @@ export async function syncMetaData() {
         }
       }
 
-      const adAccounts = await meta.getBusinessAdAccounts(business.id);
+      const adAccounts = useFallback
+        ? await meta.getDirectAdAccounts()
+        : await meta.getBusinessAdAccounts(business.id);
 
       for (const adAccount of adAccounts) {
         const adAccountAssetUpsert = await client

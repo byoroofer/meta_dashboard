@@ -37,11 +37,13 @@ export async function GET() {
   // Derive an overall readiness verdict
   const allMetaReady = config.metaAppCredentials && config.metaSystemUser && config.supabaseAdmin;
   const businessesFound = (lastSync?.counts?.["businesses"] ?? 0) > 0;
+  const assetsFound = (lastSync?.counts?.["assets"] ?? 0) > 0;
 
   let verdict: "ready" | "no_businesses" | "missing_config" | "never_run" = "ready";
   if (!allMetaReady) verdict = "missing_config";
   else if (!lastSync) verdict = "never_run";
-  else if (!businessesFound) verdict = "no_businesses";
+  // If businesses = 1 via fallback and assets > 0, treat as ready
+  else if (!businessesFound && !assetsFound) verdict = "no_businesses";
 
   return NextResponse.json({ config, lastSync, verdict });
 }

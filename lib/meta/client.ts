@@ -146,6 +146,20 @@ export class MetaBusinessClient {
     });
   }
 
+  /** Fallback: pages the system user can directly access (bypasses /me/businesses hierarchy) */
+  async getDirectPages() {
+    return this.fetchAllPages<MetaPageNode>("/me/accounts", {
+      fields: "id,name,tasks,instagram_business_account{id,username,name}"
+    });
+  }
+
+  /** Fallback: ad accounts the system user can directly access */
+  async getDirectAdAccounts() {
+    return this.fetchAllPages<MetaAdAccountNode>("/me/adaccounts", {
+      fields: "id,account_id,name,currency,account_status"
+    });
+  }
+
   async getBusinessPages(businessId: string) {
     return this.fetchAllPages<MetaPageNode>(`/${businessId}/owned_pages`, {
       fields: "id,name,tasks,instagram_business_account{id,username,name}"
