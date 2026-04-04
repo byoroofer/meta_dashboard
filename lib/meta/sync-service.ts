@@ -26,6 +26,13 @@ function statusFromAccountStatus(value?: number) {
   return value === 1 ? "active" : "warning";
 }
 
+// /me/adaccounts returns id as "act_XXXXXXX"; owned_ad_accounts returns
+// account_id (numeric) and id as "act_XXXXXXX". Normalize to bare numeric ID.
+function normalizeAdAccountId(adAccount: { id?: string; account_id?: string }): string {
+  const raw = str(adAccount.account_id || adAccount.id);
+  return raw.startsWith("act_") ? raw.slice(4) : raw;
+}
+
 function deliveryStatus(value?: string) {
   const normalized = (value ?? "").toUpperCase();
 
@@ -250,7 +257,7 @@ export async function syncMetaData() {
             {
               business_id: businessId,
               asset_type: "ad_account",
-              external_asset_id: str(adAccount.account_id || adAccount.id),
+              external_asset_id: normalizeAdAccountId(adAccount),
               asset_name: str(adAccount.name, "Ad account"),
               connection_status: statusFromAccountStatus(adAccount.account_status),
               sync_status: "healthy",
@@ -272,7 +279,7 @@ export async function syncMetaData() {
           .upsert(
             {
               connected_asset_id: adAccountAssetId,
-              external_account_id: str(adAccount.account_id || adAccount.id),
+              external_account_id: normalizeAdAccountId(adAccount),
               account_name: str(adAccount.name, "Ad account"),
               currency: str(adAccount.currency, "USD"),
               status: statusFromAccountStatus(adAccount.account_status)
@@ -302,7 +309,7 @@ export async function syncMetaData() {
           counts.links += linksUpsert.data?.length ?? linkPayload.length;
         }
 
-        const campaigns = await meta.getCampaigns(str(adAccount.account_id || adAccount.id));
+        const campaigns = await meta.getCampaigns(normalizeAdAccountId(adAccount));
         const campaignIdsByExternalId = new Map<string, string>();
 
         for (const campaign of campaigns) {
@@ -327,7 +334,7 @@ export async function syncMetaData() {
           counts.campaigns += 1;
         }
 
-        const adsets = await meta.getAdSets(str(adAccount.account_id || adAccount.id));
+        const adsets = await meta.getAdSets(normalizeAdAccountId(adAccount));
         const adsetIdsByExternalId = new Map<string, string>();
 
         for (const adset of adsets) {
@@ -354,7 +361,7 @@ export async function syncMetaData() {
           counts.adsets += 1;
         }
 
-        const ads = await meta.getAds(str(adAccount.account_id || adAccount.id));
+        const ads = await meta.getAds(normalizeAdAccountId(adAccount));
 
         for (const ad of ads) {
           const adsetId = adsetIdsByExternalId.get(str(ad.adset_id)) ?? Array.from(adsetIdsByExternalId.values())[0];
@@ -380,7 +387,7 @@ export async function syncMetaData() {
         }
 
         const entityTargets = [
-          { entityType: "account", entityId: adAccountId, path: `/act_${str(adAccount.account_id || adAccount.id)}/insights` },
+          { entityType: "account", entityId: adAccountId, path: `/act_${normalizeAdAccountId(adAccount)}/insights` },
           ...Array.from(campaignIdsByExternalId.entries()).map(([externalId, entityId]) => ({
             entityType: "campaign",
             entityId,

@@ -115,7 +115,8 @@ export class MetaBusinessClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Meta API request failed: ${response.status} ${response.statusText}`);
+      const body = await response.text().catch(() => "");
+      throw new Error(`Meta API request failed: ${response.status} ${response.statusText} — ${this.buildUrl(path, params).split("?")[0]} — ${body.slice(0, 200)}`);
     }
 
     const payload = (await response.json()) as T & { error?: { message?: string } };
@@ -149,14 +150,14 @@ export class MetaBusinessClient {
   /** Fallback: pages the system user can directly access (bypasses /me/businesses hierarchy) */
   async getDirectPages() {
     return this.fetchAllPages<MetaPageNode>("/me/accounts", {
-      fields: "id,name,instagram_business_account{id,username,name}"
+      fields: "id,name"
     });
   }
 
   /** Fallback: ad accounts the system user can directly access */
   async getDirectAdAccounts() {
     return this.fetchAllPages<MetaAdAccountNode>("/me/adaccounts", {
-      fields: "id,account_id,name,currency,account_status"
+      fields: "id,name,currency,account_status"
     });
   }
 
