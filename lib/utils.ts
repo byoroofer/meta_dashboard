@@ -1,17 +1,30 @@
 import { clsx, type ClassValue } from "clsx";
-import { format, parseISO } from "date-fns";
 import { twMerge } from "tailwind-merge";
+
+const DALLAS_TZ = "America/Chicago";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function formatDateTime(value: string) {
-  return format(parseISO(value), "MMM d, yyyy h:mm a");
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DALLAS_TZ,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  }).format(new Date(value));
 }
 
 export function formatShortDate(value: string) {
-  return format(parseISO(value), "MMM d");
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DALLAS_TZ,
+    month: "short",
+    day: "numeric"
+  }).format(new Date(value));
 }
 
 export function formatCurrency(value: number, currency = "USD") {

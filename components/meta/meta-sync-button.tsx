@@ -190,7 +190,7 @@ export function MetaSyncButton() {
               <p className="font-semibold uppercase tracking-[0.14em] text-slate-500">Last sync</p>
               <p className="mt-1 text-[var(--muted)]">
                 {status.lastSync.status.toUpperCase()} ·{" "}
-                {new Date(status.lastSync.startedAt).toLocaleString()}
+                {new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(status.lastSync.startedAt))}
               </p>
               <p className="mt-0.5 text-[var(--muted)]">{status.lastSync.detail}</p>
             </div>
