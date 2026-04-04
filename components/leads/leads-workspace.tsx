@@ -1,7 +1,7 @@
+import type { Route } from "next";
 import Link from "next/link";
-import { CircleDollarSign, Globe, Route, UserRound, UserRoundSearch } from "lucide-react";
+import { CircleDollarSign, Globe, Route as RouteIcon, UserRound, UserRoundSearch } from "lucide-react";
 
-import { DataTable } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterBar } from "@/components/shared/filter-bar";
 import { PageHeader } from "@/components/shared/page-header";
@@ -9,6 +9,14 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import type { Lead, LeadActivity, LeadDestination } from "@/types/domain";
+
+const stages = [
+  { key: "new", label: "New" },
+  { key: "qualified", label: "Qualified" },
+  { key: "nurturing", label: "Proposal" },
+  { key: "won", label: "Won" },
+  { key: "lost", label: "Lost" }
+] as const;
 
 export function LeadsWorkspace({
   leads,
@@ -38,22 +46,78 @@ export function LeadsWorkspace({
             <CardDescription>Captured lead records ready for assignment, qualification, and website delivery workflows.</CardDescription>
           </CardHeader>
           <CardContent>
-            <DataTable
-              columns={["Lead", "Status", "Campaign", "Owner", "Created"]}
-              rows={leads.map((lead) => [
-                <Link
-                  key={lead.id}
-                  href={scopeQuery ? `/leads/${lead.id}?${scopeQuery}` : `/leads/${lead.id}`}
-                  className="font-medium text-slate-900 hover:text-[var(--accent-strong)]"
-                >
-                  {lead.fullName}
-                </Link>,
-                <StatusBadge key={`${lead.id}-status`} value={lead.status} />,
-                lead.campaignName,
-                lead.owner,
-                formatDateTime(lead.createdAt)
-              ])}
-            />
+            {leads.length ? (
+              <div className="grid gap-4 2xl:grid-cols-5">
+                {stages.map((stage) => {
+                  const stageLeads = leads.filter((lead) => lead.status === stage.key);
+
+                  return (
+                    <div key={stage.key} className="rounded-2xl border border-[var(--border)] bg-slate-50/70 p-3">
+                      <div className="flex items-center justify-between gap-3 px-1 pb-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{stage.label}</p>
+                          <p className="text-xs text-[var(--muted)]">{stageLeads.length} leads</p>
+                        </div>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[var(--muted)]">
+                          {stageLeads.length}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {stageLeads.length ? (
+                          stageLeads.map((lead) => (
+                            <Link
+                              key={lead.id}
+                              href={(scopeQuery ? `/leads/${lead.id}?${scopeQuery}` : `/leads/${lead.id}`) as Route}
+                              className={`block rounded-2xl border bg-white p-4 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-0.5 hover:border-[var(--accent)]/30 hover:shadow-[var(--shadow-card)] ${
+                                selectedLead?.id === lead.id ? "border-[var(--accent)] bg-[var(--accent-subtle)]" : "border-[var(--border)]"
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <p className="text-sm font-semibold text-slate-900">{lead.fullName}</p>
+                                  <p className="mt-1 text-xs text-[var(--muted)]">{lead.email || lead.phone}</p>
+                                </div>
+                                <StatusBadge value={lead.status} />
+                              </div>
+                              <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-medium text-[var(--muted)]">
+                                {lead.sourcePlatform ? (
+                                  <span className="rounded-full border border-[var(--border)] bg-slate-50 px-2.5 py-1">
+                                    {lead.sourcePlatform}
+                                  </span>
+                                ) : null}
+                                {lead.sourceChannel ? (
+                                  <span className="rounded-full border border-[var(--border)] bg-slate-50 px-2.5 py-1">
+                                    {lead.sourceChannel}
+                                  </span>
+                                ) : null}
+                              </div>
+                              <div className="mt-4 space-y-2 text-xs text-[var(--muted)]">
+                                <p className="truncate font-medium text-slate-700">{lead.campaignName || "Unattributed campaign"}</p>
+                                <p className="truncate">{lead.adsetName || "No ad set linked"}</p>
+                                <div className="flex items-center justify-between gap-2 pt-1">
+                                  <span>{lead.owner}</span>
+                                  <span>{formatDateTime(lead.createdAt)}</span>
+                                </div>
+                              </div>
+                            </Link>
+                          ))
+                        ) : (
+                          <div className="rounded-2xl border border-dashed border-[var(--border)] bg-white/80 px-4 py-8 text-center text-sm text-[var(--muted)]">
+                            No leads in {stage.label.toLowerCase()}.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                icon={UserRound}
+                title="No leads available"
+                description="Lead cards will populate here once Meta lead permissions are enabled and synced data reaches the pipeline."
+              />
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -68,7 +132,7 @@ export function LeadsWorkspace({
                   {[
                     { label: "Pipeline status", value: selectedLead.status, icon: UserRoundSearch },
                     { label: "Campaign", value: selectedLead.campaignName, icon: CircleDollarSign },
-                    { label: "Ad set", value: selectedLead.adsetName, icon: Route },
+                    { label: "Ad set", value: selectedLead.adsetName, icon: RouteIcon },
                     { label: "Assigned owner", value: selectedLead.owner, icon: UserRoundSearch }
                   ].map((item) => (
                     <div key={item.label} className="rounded-xl border border-[var(--border)] bg-slate-50 p-4">

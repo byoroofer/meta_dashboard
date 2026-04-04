@@ -2,6 +2,19 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-04T16:09:06-05:00 | Inbox, leads, and ads UI upgrade pass
+
+- Change summary: Replaced the inbox table with a conversation-list UI and richer thread/composer, replaced the leads table with a kanban-style board, and added ad reporting trend cards with inline sparklines.
+- Files changed: `components/inbox/inbox-workspace.tsx`, `components/inbox/reply-composer.tsx`, `components/leads/leads-workspace.tsx`, `components/ads/ads-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npx vercel deploy --prod --yes`; verification commands were `cmd /c npx tsc --noEmit` and `cmd /c npx eslint .`
+- Reversal steps:
+  1. Restore the prior table-driven `components/inbox/inbox-workspace.tsx`.
+  2. Remove `components/inbox/reply-composer.tsx`.
+  3. Restore the prior `components/leads/leads-workspace.tsx`.
+  4. Restore the prior `components/ads/ads-workspace.tsx`.
+  5. Revert the `.agent/` memory-file edits if this session record is incorrect.
+- Notes: Verification passed after fixing typed-route casts and icon import collisions. Production deploy completed and was aliased to `https://tjware.me`.
+
 ## 2026-04-04T12:00:00-05:00 | Meta live import fixes and date timezone
 
 - Change summary: 8 commits fixing the Meta import fallback path iteratively. Import now populates live data. Dates now display in America/Chicago.

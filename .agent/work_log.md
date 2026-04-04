@@ -2,6 +2,27 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-04T16:09:06-05:00 | Inbox, leads, and ads UI upgrade pass
+
+- Task: Implement the highest-priority UI improvements from the session handoff, starting with the inbox conversation list, then the leads pipeline, then ad reporting trends.
+- Context: The live Meta import is now working, but these three dashboard surfaces were still using table-heavy layouts that did not match the upgraded design system.
+- Files changed: `components/inbox/inbox-workspace.tsx`, `components/inbox/reply-composer.tsx`, `components/leads/leads-workspace.tsx`, `components/ads/ads-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `Get-Content -Raw README.md`; `Get-Content -Raw .agent/project_overview.md`; `Get-Content -Raw .agent/session_handoff.md`; `Get-Content -Raw .agent/open_issues.md`; `Get-Content -Raw .agent/decisions.md`; `git branch --show-current`; `git rev-parse HEAD`; `git status --short`; `git log --oneline -12`; `rg --files app components lib | rg "inbox|lead|ads|report|conversation|message|thread"`; `Get-Content -Raw` across the inbox, leads, ads, shared UI, route-page, type, and utility files; `cmd /c npx tsc --noEmit`; `cmd /c npx eslint .`; `cmd /c npx vercel deploy --prod --yes`; `Get-Date -Format o`
+- Errors encountered:
+  1. A large `apply_patch` call exceeded the Windows command-size limit, so the edits had to be split into smaller file-level patches.
+  2. PowerShell parsed route-group paths like `app\(dashboard)\...` incorrectly until they were reread with `-LiteralPath`.
+  3. PowerShell execution policy blocked `npx.ps1`, so verification was rerun through `cmd /c`.
+  4. TypeScript initially failed because `lucide-react` in this install does not export `Instagram`, and typed Next routes required explicit `Route` casts for dynamic `Link` href values.
+  5. Leads UI then hit a naming collision between Next's `Route` type and the `Route` lucide icon; the icon import was renamed to `RouteIcon`.
+- Fix or decision:
+  1. Replaced the inbox `DataTable` with a conversation-list UI showing avatar initials, last-message preview, unread dot/count, assignment, and timestamp gutter.
+  2. Improved the message thread with tighter chat bubbles, inbound avatars, and a new client-side reply composer with live character count.
+  3. Replaced the leads table with a kanban-style board grouped into New, Qualified, Proposal, Won, and Lost columns using the existing `nurturing` status for the Proposal column.
+  4. Upgraded ad reporting with compact trend cards and inline SVG sparklines for spend, impressions, clicks, and CTR without adding a new chart dependency.
+- Rationale: These were the highest-impact operator-facing UI gaps called out in the handoff, and they could be completed cleanly without touching the live data/service boundaries.
+- Rollback plan: Revert `components/inbox/inbox-workspace.tsx`, delete `components/inbox/reply-composer.tsx`, revert `components/leads/leads-workspace.tsx`, and revert `components/ads/ads-workspace.tsx`. If committed later, prefer `git revert` of the resulting commit.
+- Next steps: Implement the remaining UI items from the handoff, with overview empty states next, then connected-account health/mobile shell/settings/audit polish. This UI pass has been deployed to production.
+
 ## 2026-04-04T12:00:00-05:00 | Meta live import — direct-asset fallback, token fixes, graceful lead skip
 
 - Task: Get the Meta import to actually populate live business data. The system user token was valid but `/me/businesses` returned empty. Iteratively fixed each API error until the import succeeded.
