@@ -3,7 +3,7 @@ returns text
 language sql
 immutable
 as $$
-  select encode(digest(value, 'sha256'), 'hex');
+  select encode(extensions.digest(value, 'sha256'), 'hex');
 $$;
 
 create or replace view public.conversation_rollups as

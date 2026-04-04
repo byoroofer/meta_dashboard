@@ -1,12 +1,13 @@
+import type { DashboardScope } from "@/lib/dashboard/scope";
 import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
 import { getPortalData } from "@/lib/services/portal-service";
 
-export async function getSettingsData() {
+export async function getSettingsData(scope?: DashboardScope) {
   const [auditLogs, autoResponderRules, leadDestinations, portal] = await Promise.all([
-    dashboardRepository.getAuditLogs(),
-    dashboardRepository.getAutoResponderRules(),
-    dashboardRepository.getLeadDestinations(),
-    getPortalData()
+    dashboardRepository.getAuditLogs(scope),
+    dashboardRepository.getAutoResponderRules(scope),
+    dashboardRepository.getLeadDestinations(scope),
+    getPortalData(scope)
   ]);
 
   return {

@@ -40,6 +40,7 @@ export type DatabaseTableName =
   | "command_templates"
   | "command_executions"
   | "ad_accounts"
+  | "ad_account_asset_links"
   | "campaigns"
   | "adsets"
   | "ads"

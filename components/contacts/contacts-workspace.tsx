@@ -13,12 +13,14 @@ export function ContactsWorkspace({
   contacts,
   selectedContact,
   linkedConversations,
-  linkedLeads
+  linkedLeads,
+  scopeQuery
 }: {
   contacts: Contact[];
   selectedContact: Contact | null;
   linkedConversations: Conversation[];
   linkedLeads: Lead[];
+  scopeQuery?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -38,7 +40,11 @@ export function ContactsWorkspace({
             <DataTable
               columns={["Name", "Stage", "Owner", "Source", "Last activity"]}
               rows={contacts.map((contact) => [
-                <Link key={contact.id} href={`/contacts/${contact.id}`} className="font-medium text-slate-900 hover:text-[var(--accent-strong)]">
+                <Link
+                  key={contact.id}
+                  href={scopeQuery ? `/contacts/${contact.id}?${scopeQuery}` : `/contacts/${contact.id}`}
+                  className="font-medium text-slate-900 hover:text-[var(--accent-strong)]"
+                >
                   {contact.displayName}
                 </Link>,
                 <StatusBadge key={`${contact.id}-stage`} value={contact.stage} />,

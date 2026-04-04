@@ -18,13 +18,15 @@ export function InboxWorkspace({
   selectedConversation,
   threadMessages,
   notes,
-  autoResponderRules
+  autoResponderRules,
+  scopeQuery
 }: {
   conversations: Conversation[];
   selectedConversation: Conversation | null;
   threadMessages: Message[];
   notes: ConversationNote[];
   autoResponderRules: AutoResponderRule[];
+  scopeQuery?: string;
 }) {
   const activeRules = autoResponderRules.filter((rule) => rule.status === "active");
 
@@ -60,7 +62,11 @@ export function InboxWorkspace({
             <DataTable
               columns={["Contact", "Platform", "Status", "Assigned", "Last activity"]}
               rows={conversations.map((item) => [
-                <Link key={item.id} href={`/inbox/${item.id}`} className="font-medium text-slate-900 hover:text-[var(--accent-strong)]">
+                <Link
+                  key={item.id}
+                  href={scopeQuery ? `/inbox/${item.id}?${scopeQuery}` : `/inbox/${item.id}`}
+                  className="font-medium text-slate-900 hover:text-[var(--accent-strong)]"
+                >
                   {item.contactName}
                 </Link>,
                 item.platform,

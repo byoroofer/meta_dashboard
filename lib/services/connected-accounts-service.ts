@@ -1,4 +1,5 @@
-﻿import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
+import type { DashboardScope } from "@/lib/dashboard/scope";
+import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
 import { getPortalData } from "@/lib/services/portal-service";
 import type { IntegrationTarget, OverviewMetric } from "@/types/domain";
 
@@ -33,12 +34,13 @@ function getTargetNextStep(
   return "Ready for internal operational mutations and retry commands.";
 }
 
-export async function getConnectedAccountsData() {
-  const [businesses, assets, auditLogs, portal] = await Promise.all([
-    dashboardRepository.getConnectedBusinesses(),
-    dashboardRepository.getConnectedAssets(),
-    dashboardRepository.getAuditLogs(),
-    getPortalData()
+export async function getConnectedAccountsData(scope?: DashboardScope) {
+  const [businesses, assets, adAccounts, auditLogs, portal] = await Promise.all([
+    dashboardRepository.getConnectedBusinesses(scope),
+    dashboardRepository.getConnectedAssets(scope),
+    dashboardRepository.getAdAccounts(scope),
+    dashboardRepository.getAuditLogs(scope),
+    getPortalData(scope)
   ]);
 
   const controlMetrics: OverviewMetric[] = [
@@ -111,6 +113,7 @@ export async function getConnectedAccountsData() {
   return {
     businesses,
     assets,
+    adAccounts,
     recentAudit: auditLogs.slice(0, 5),
     controlMetrics,
     commandCoverage,

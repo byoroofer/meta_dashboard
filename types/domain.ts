@@ -496,6 +496,10 @@ export interface AdAccount {
   status: ConnectionStatus;
   spendToday: number;
   spendMonth: number;
+  linkedAssetIds?: string[];
+  linkedAssetNames?: string[];
+  linkedBusinessIds?: string[];
+  linkedBusinessNames?: string[];
 }
 
 export interface Campaign {

@@ -1,3 +1,4 @@
+import { MetaSyncButton } from "@/components/meta/meta-sync-button";
 import { DataTable } from "@/components/shared/data-table";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -33,6 +34,7 @@ export function AdsWorkspace({
         eyebrow="Ad reporting"
         title={mode === "overview" ? "Ads" : mode.charAt(0).toUpperCase() + mode.slice(1)}
         description="Connected Meta ad account views with campaign, ad set, ad, and daily insight structures in the same Business Center visual system."
+        actions={<MetaSyncButton />}
       />
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
@@ -43,9 +45,11 @@ export function AdsWorkspace({
           </CardHeader>
           <CardContent>
             <DataTable
-              columns={["Account", "Status", "Spend today", "Spend month"]}
+              columns={["Account", "Linked businesses", "Linked assets", "Status", "Spend today", "Spend month"]}
               rows={accounts.map((account) => [
                 account.name,
+                account.linkedBusinessNames?.join(", ") || "Unlinked",
+                account.linkedAssetNames?.join(", ") || "No linked assets",
                 <StatusBadge key={`${account.id}-status`} value={account.status} />,
                 formatCurrency(account.spendToday),
                 formatCurrency(account.spendMonth)

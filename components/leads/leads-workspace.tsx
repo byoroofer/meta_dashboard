@@ -14,12 +14,14 @@ export function LeadsWorkspace({
   leads,
   selectedLead,
   activities,
-  leadDestinations
+  leadDestinations,
+  scopeQuery
 }: {
   leads: Lead[];
   selectedLead: Lead | null;
   activities: LeadActivity[];
   leadDestinations: LeadDestination[];
+  scopeQuery?: string;
 }) {
   return (
     <div className="space-y-6">
@@ -39,7 +41,11 @@ export function LeadsWorkspace({
             <DataTable
               columns={["Lead", "Status", "Campaign", "Owner", "Created"]}
               rows={leads.map((lead) => [
-                <Link key={lead.id} href={`/leads/${lead.id}`} className="font-medium text-slate-900 hover:text-[var(--accent-strong)]">
+                <Link
+                  key={lead.id}
+                  href={scopeQuery ? `/leads/${lead.id}?${scopeQuery}` : `/leads/${lead.id}`}
+                  className="font-medium text-slate-900 hover:text-[var(--accent-strong)]"
+                >
                   {lead.fullName}
                 </Link>,
                 <StatusBadge key={`${lead.id}-status`} value={lead.status} />,

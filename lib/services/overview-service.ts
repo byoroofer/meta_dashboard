@@ -1,8 +1,9 @@
+import type { DashboardScope } from "@/lib/dashboard/scope";
 import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
 import { getPortalData } from "@/lib/services/portal-service";
 import type { OverviewMetric } from "@/types/domain";
 
-export async function getOverviewData() {
+export async function getOverviewData(scope?: DashboardScope) {
   const [
     conversations,
     leads,
@@ -14,15 +15,15 @@ export async function getOverviewData() {
     leadDestinations,
     portal
   ] = await Promise.all([
-    dashboardRepository.getConversations(),
-    dashboardRepository.getLeads(),
-    dashboardRepository.getAdAccounts(),
-    dashboardRepository.getRawWebhookEvents(),
-    dashboardRepository.getSyncJobs(),
-    dashboardRepository.getConnectedAssets(),
-    dashboardRepository.getAutoResponderRules(),
-    dashboardRepository.getLeadDestinations(),
-    getPortalData()
+    dashboardRepository.getConversations(scope),
+    dashboardRepository.getLeads(scope),
+    dashboardRepository.getAdAccounts(scope),
+    dashboardRepository.getRawWebhookEvents(scope),
+    dashboardRepository.getSyncJobs(scope),
+    dashboardRepository.getConnectedAssets(scope),
+    dashboardRepository.getAutoResponderRules(scope),
+    dashboardRepository.getLeadDestinations(scope),
+    getPortalData(scope)
   ]);
 
   const metrics: OverviewMetric[] = [

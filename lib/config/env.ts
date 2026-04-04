@@ -11,10 +11,12 @@ const envSchema = z.object({
   SUPABASE_DB_URL: z.string().default(""),
   META_APP_ID: z.string().default(""),
   META_APP_SECRET: z.string().default(""),
+  META_API_VERSION: z.string().default("v22.0"),
   META_WEBHOOK_VERIFY_TOKEN: z.string().default(""),
   META_WEBHOOK_APP_SECRET: z.string().default(""),
   META_SYSTEM_USER_ACCESS_TOKEN: z.string().default(""),
   ENCRYPTION_KEY: z.string().default(""),
+  DASHBOARD_ADMIN_PASSWORD: z.string().default(""),
   DEMO_USER_EMAIL: z.string().default("ops@meta-dashboard.internal")
 });
 
@@ -29,10 +31,12 @@ export const env = envSchema.parse({
   SUPABASE_DB_URL: process.env.SUPABASE_DB_URL,
   META_APP_ID: process.env.META_APP_ID,
   META_APP_SECRET: process.env.META_APP_SECRET,
+  META_API_VERSION: process.env.META_API_VERSION,
   META_WEBHOOK_VERIFY_TOKEN: process.env.META_WEBHOOK_VERIFY_TOKEN,
   META_WEBHOOK_APP_SECRET: process.env.META_WEBHOOK_APP_SECRET,
   META_SYSTEM_USER_ACCESS_TOKEN: process.env.META_SYSTEM_USER_ACCESS_TOKEN,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+  DASHBOARD_ADMIN_PASSWORD: process.env.DASHBOARD_ADMIN_PASSWORD,
   DEMO_USER_EMAIL: process.env.DEMO_USER_EMAIL
 });
 

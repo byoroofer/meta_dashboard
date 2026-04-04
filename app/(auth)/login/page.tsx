@@ -1,10 +1,39 @@
-import Link from "next/link";
-import { ArrowRight, Lock, ShieldCheck } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Lock, ShieldCheck } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { LoginForm } from "@/components/auth/login-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSession, isAdminPasswordConfigured } from "@/lib/auth/session";
+import { withBasePath } from "@/lib/config/base-path";
 
-export default function LoginPage() {
+function resolveErrorLabel(error?: string) {
+  if (error === "invalid-password") {
+    return "Password is incorrect.";
+  }
+
+  if (error === "not-configured") {
+    return "Dashboard password is not configured on this environment.";
+  }
+
+  return null;
+}
+
+export default async function LoginPage({
+  searchParams
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const session = await getSession();
+
+  if (session) {
+    redirect(withBasePath("/overview") as never);
+  }
+
+  const params = await searchParams;
+  const errorValue = Array.isArray(params.error) ? params.error[0] : params.error;
+  const errorLabel = resolveErrorLabel(errorValue);
+  const configured = isAdminPasswordConfigured();
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-[var(--background)] p-6">
       <div className="grid w-full max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
@@ -19,7 +48,7 @@ export default function LoginPage() {
               Run messages, lead routing, websites, ads, and archive integrity from one business workspace.
             </h1>
             <p className="max-w-xl text-lg leading-8 text-[var(--muted)]">
-              Designed around supported Meta business assets only, with raw webhook preservation, normalized operations data, and server-first security boundaries.
+              Protected with a simple password gate before the richer auth stack is finalized.
             </p>
           </div>
           <div className="mt-12 grid gap-4 md:grid-cols-3">
@@ -40,23 +69,18 @@ export default function LoginPage() {
               <Lock className="h-5 w-5 text-[var(--accent)]" />
               Admin access
             </CardTitle>
-            <CardDescription>Authentication is scaffolded for a server-side admin gate. Supabase Auth or SSO can plug in next.</CardDescription>
+            <CardDescription>Enter the admin password to access the dashboard.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              MFA enrollment, role enforcement, and session hardening are represented in the architecture but not activated until credentials are connected.
-            </div>
-            <div className="space-y-3 rounded-2xl border border-[var(--border)] bg-slate-50 p-4 font-[var(--font-mono)] text-sm text-[var(--muted)]">
-              <p>Route: /login</p>
-              <p>Guard target: dashboard routes</p>
-              <p>Session mode: scaffolded admin placeholder</p>
-            </div>
-            <Button asChild className="w-full">
-              <Link href="/overview">
-                Enter dashboard
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            {errorLabel ? (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{errorLabel}</div>
+            ) : null}
+            {!configured ? (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                `DASHBOARD_ADMIN_PASSWORD` is not configured for this environment yet.
+              </div>
+            ) : null}
+            <LoginForm disabled={!configured} />
           </CardContent>
         </Card>
       </div>

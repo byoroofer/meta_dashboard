@@ -12,6 +12,7 @@ import {
   type ConsentState,
   essentialsOnlyPreferences
 } from "@/lib/privacy/consent";
+import { withBasePath } from "@/lib/config/base-path";
 import { getOrCreateSessionId, getOrCreateVisitorId, getSessionPayload, readStoredConsentState, saveConsentState } from "@/lib/tracking/session";
 
 const DASHBOARD_PREFIXES = [
@@ -85,7 +86,7 @@ export function TrackingProvider({
       syncingRef.current = true;
 
       try {
-        await postJson("/api/tracking/session", getSessionPayload(consentState.preferences));
+        await postJson(withBasePath("/api/tracking/session"), getSessionPayload(consentState.preferences));
       } catch {
         // Keep the banner usable even if the server endpoint is unavailable during local setup.
       } finally {
@@ -120,8 +121,8 @@ export function TrackingProvider({
     const sessionPayload = getSessionPayload(preferences);
 
     try {
-      await postJson("/api/tracking/session", sessionPayload);
-      await postJson("/api/tracking/consent", {
+      await postJson(withBasePath("/api/tracking/session"), sessionPayload);
+      await postJson(withBasePath("/api/tracking/consent"), {
         anonymousId: sessionPayload.anonymousId,
         sessionToken: sessionPayload.sessionToken,
         policyVersion,

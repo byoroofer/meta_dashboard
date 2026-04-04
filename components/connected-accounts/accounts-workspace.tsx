@@ -1,12 +1,13 @@
-﻿import { Database, Globe, MessageSquareShare, Network, ShieldCheck } from "lucide-react";
+import { Database, Globe, MessageSquareShare, Network, ShieldCheck } from "lucide-react";
 
+import { MetaSyncButton } from "@/components/meta/meta-sync-button";
 import { DataTable } from "@/components/shared/data-table";
 import { MetricCard } from "@/components/shared/metric-card";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatDateTime } from "@/lib/utils";
-import type { AuditLog, ConnectedAsset, ConnectedBusiness, OverviewMetric } from "@/types/domain";
+import { formatDateTime, formatCurrency } from "@/lib/utils";
+import type { AdAccount, AuditLog, ConnectedAsset, ConnectedBusiness, OverviewMetric } from "@/types/domain";
 
 const targetTypeIcons = {
   meta_asset: MessageSquareShare,
@@ -22,6 +23,7 @@ function formatOptionalDate(value: string | null) {
 export function AccountsWorkspace({
   businesses,
   assets,
+  adAccounts,
   recentAudit,
   controlMetrics,
   commandCoverage,
@@ -29,6 +31,7 @@ export function AccountsWorkspace({
 }: {
   businesses: ConnectedBusiness[];
   assets: ConnectedAsset[];
+  adAccounts: AdAccount[];
   recentAudit: AuditLog[];
   controlMetrics: OverviewMetric[];
   commandCoverage: Array<{
@@ -58,6 +61,7 @@ export function AccountsWorkspace({
         eyebrow="Business connectivity"
         title="Connected Accounts"
         description="Supported Meta assets, website endpoints, databases, and internal tables that this portal can observe and eventually command through guarded server-side integrations."
+        actions={<MetaSyncButton />}
       />
 
       <section className="grid gap-4 xl:grid-cols-4">
@@ -106,6 +110,25 @@ export function AccountsWorkspace({
           </CardContent>
         </Card>
       </section>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Shared ad account links</CardTitle>
+          <CardDescription>One ad account can be mapped to multiple Facebook and Instagram assets across the businesses you operate from this dashboard.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DataTable
+            columns={["Ad account", "Businesses", "Assets", "Status", "Spend month"]}
+            rows={adAccounts.map((account) => [
+              account.name,
+              account.linkedBusinessNames?.join(", ") || "Unlinked",
+              account.linkedAssetNames?.join(", ") || "No mapped assets",
+              <StatusBadge key={`${account.id}-ad-status`} value={account.status} />,
+              formatCurrency(account.spendMonth, account.currency)
+            ])}
+          />
+        </CardContent>
+      </Card>
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <Card>

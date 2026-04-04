@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 
+import { resolveDashboardScope } from "@/lib/dashboard/scope";
 import { getInboxData } from "@/lib/services/inbox-service";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ conversationId: string }> }
 ) {
   const { conversationId } = await params;
-  const data = await getInboxData(conversationId);
+  const scope = await resolveDashboardScope(new URL(request.url).searchParams);
+  const data = await getInboxData(scope, conversationId);
 
   if (!data.selectedConversation) {
     return NextResponse.json({ success: false, error: "Conversation not found." }, { status: 404 });

@@ -1,4 +1,5 @@
 import { getSupabaseAdminClient } from "@/lib/db/supabase/admin";
+import type { DashboardScope } from "@/lib/dashboard/scope";
 import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
 import type { CommandExecution, CommandTemplate, IntegrationTarget } from "@/types/domain";
 
@@ -86,14 +87,14 @@ function mapExecution(
   };
 }
 
-export async function getPortalData() {
+export async function getPortalData(scope?: DashboardScope) {
   const client = getSupabaseAdminClient();
 
   if (!client) {
     const [targets, templates, executions] = await Promise.all([
-      dashboardRepository.getIntegrationTargets(),
-      dashboardRepository.getCommandTemplates(),
-      dashboardRepository.getCommandExecutions()
+      dashboardRepository.getIntegrationTargets(scope),
+      dashboardRepository.getCommandTemplates(scope),
+      dashboardRepository.getCommandExecutions(scope)
     ]);
 
     return { targets, templates, executions };
@@ -101,14 +102,26 @@ export async function getPortalData() {
 
   try {
     const [targetsResult, templatesResult, executionsResult] = await Promise.all([
-      client
-        .from("integration_targets")
-        .select("id,target_name,target_type,status,connection_label,summary,capabilities,last_heartbeat_at")
-        .order("target_name"),
-      client
-        .from("command_templates")
-        .select("id,template_name,target_type,command_key,status,summary,requires_approval,input_shape_label,updated_at,created_at")
-        .order("template_name"),
+      (scope?.businessId
+        ? client
+            .from("integration_targets")
+            .select("id,target_name,target_type,status,connection_label,summary,capabilities,last_heartbeat_at")
+            .eq("connected_business_id", scope.businessId)
+            .order("target_name")
+        : client
+            .from("integration_targets")
+            .select("id,target_name,target_type,status,connection_label,summary,capabilities,last_heartbeat_at")
+            .order("target_name")),
+      (scope?.businessId
+        ? client
+            .from("command_templates")
+            .select("id,template_name,target_type,command_key,status,summary,requires_approval,input_shape_label,updated_at,created_at")
+            .eq("connected_business_id", scope.businessId)
+            .order("template_name")
+        : client
+            .from("command_templates")
+            .select("id,template_name,target_type,command_key,status,summary,requires_approval,input_shape_label,updated_at,created_at")
+            .order("template_name")),
       client
         .from("command_executions")
         .select("id,command_template_id,integration_target_id,requested_by_label,status,result_summary,requested_at,completed_at")
@@ -137,9 +150,9 @@ export async function getPortalData() {
   }
 
   const [targets, templates, executions] = await Promise.all([
-    dashboardRepository.getIntegrationTargets(),
-    dashboardRepository.getCommandTemplates(),
-    dashboardRepository.getCommandExecutions()
+    dashboardRepository.getIntegrationTargets(scope),
+    dashboardRepository.getCommandTemplates(scope),
+    dashboardRepository.getCommandExecutions(scope)
   ]);
 
   return { targets, templates, executions };
