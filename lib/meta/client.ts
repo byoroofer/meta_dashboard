@@ -149,7 +149,7 @@ export class MetaBusinessClient {
   /** Fallback: pages the system user can directly access (bypasses /me/businesses hierarchy) */
   async getDirectPages() {
     return this.fetchAllPages<MetaPageNode>("/me/accounts", {
-      fields: "id,name,tasks,instagram_business_account{id,username,name}"
+      fields: "id,name,instagram_business_account{id,username,name}"
     });
   }
 
