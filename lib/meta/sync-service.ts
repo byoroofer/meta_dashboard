@@ -213,7 +213,7 @@ export async function syncMetaData() {
           if (formUpsert.error) throw formUpsert.error;
           counts.leadForms += 1;
           const formId = str((formUpsert.data as Row).id);
-          const leads = await meta.getLeads(form.id);
+          const leads = await leadFormClient.getLeads(form.id);
 
           for (const lead of leads) {
             const fullName = extractLeadValue(lead.field_data, ["full_name", "name", "full name"]);
