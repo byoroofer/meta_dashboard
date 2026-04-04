@@ -1,5 +1,21 @@
 # Open Issues
 
+## OPEN-2026-04-04-09 | leads_retrieval permission not granted on Meta app
+
+- Status: open
+- Area: Meta permissions
+- Summary: The Meta app does not have `leads_retrieval` approved. Lead forms and leads are skipped gracefully during import (403 is caught, import continues). No leads appear in the dashboard until this is resolved.
+- Impact: Lead pipeline page will be empty even after a successful sync.
+- Next action: In Meta for Developers → App Dashboard → App Review → Permissions, request `leads_retrieval`. Once approved, re-sync and leads will populate.
+
+## OPEN-2026-04-04-10 | System user not a business portfolio member
+
+- Status: open
+- Area: Meta access
+- Summary: System user has direct asset access but is not a member of the Elite Cleaning business portfolio. The import uses a direct-asset fallback (`/me/accounts`, `/me/adaccounts`) which works correctly. Long-term this is cleaner through the proper business path.
+- Impact: None currently — fallback works. If more businesses are added later, they won't be auto-discovered.
+- Next action: In Meta Business Settings, add the system user to Elite Cleaning business as Employee.
+
 ## OPEN-2026-04-03-08 | README migration list is behind actual migration state
 
 - Status: open
@@ -22,7 +38,7 @@ Purpose: track unresolved technical risks, bugs, debt, and documentation drift. 
 
 ## OPEN-2026-04-03-07 | Production Meta import succeeds but returns zero connected businesses
 
-- Status: open
+- Status: resolved 2026-04-04T12:00:00-05:00 via direct-asset fallback (commit 665d47a). Import now populates live data using /me/accounts and /me/adaccounts.
 - Area: Meta access
 - Summary: After the production Supabase schema was fixed on April 3, 2026, `POST /meta-dashboard/api/meta/import` returned success with zero counts across businesses, assets, ad accounts, campaigns, ads, lead forms, and leads. This indicates the configured system user token is valid enough for the client to run but `GET /me/businesses` is returning no connected businesses.
 - Impact: The dashboard backend is healthy, but the live UI remains empty because the configured Meta token currently has no visible business scope to import.

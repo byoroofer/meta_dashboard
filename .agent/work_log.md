@@ -2,6 +2,24 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-04T12:00:00-05:00 | Meta live import — direct-asset fallback, token fixes, graceful lead skip
+
+- Task: Get the Meta import to actually populate live business data. The system user token was valid but `/me/businesses` returned empty. Iteratively fixed each API error until the import succeeded.
+- Context: System user has direct asset access (Elite Cleaning Page, IG, Ad Account, App — all Full control) but is not a business portfolio member. Required a fallback path.
+- Files changed: `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `lib/utils.ts`, `components/meta/meta-sync-button.tsx`
+- Commits: `4dd352d`, `665d47a`, `fd036c8`, `f67d240`, `8dbccb5`, `f79c51b`, `b8bfb06`, `8083917`
+- Errors encountered and fixed:
+  1. "Unexpected token T" — MetaSyncButton fetch calls missing `withBasePath()` prefix → fixed with `withBasePath("/api/meta/import")` and `withBasePath("/api/meta/status")`.
+  2. `400 Bad Request /me/accounts` — `tasks` field not available on `/me/accounts` → removed.
+  3. `400 Bad Request /me/adaccounts` — `account_id` not returned by direct endpoint; `id` returns `act_XXXXXXX` → added `normalizeAdAccountId()` to strip prefix.
+  4. `403 /leadgen_forms` — requires Page Access Token not system user token → use `page.access_token` from `/me/accounts` response.
+  5. `403 /leads` — same page token issue → extended page token client to lead fetches.
+  6. `403 leads_retrieval permission missing` — app doesn't have this permission approved → catch and skip gracefully, import continues.
+- Result: Import now succeeds. Imports 1 business (synthetic), 3 assets (Elite Cleaning Page, elite_cleaning_dfw IG, brookevinson IG), 1 ad account (Elite Cleaning Main), campaigns, ad sets, ads, and insights. Leads skipped pending permission.
+- Date formatting: Changed all `formatDateTime` / `formatShortDate` from `date-fns` to `Intl.DateTimeFormat` pinned to `America/Chicago` (Dallas CT).
+- Rollback plan: `git revert` any of the 8 commits individually, or `git reset --hard 63faebe` to return to the pre-session state.
+- Next steps: Add `leads_retrieval` permission to the Meta app; optionally add system user to Elite Cleaning business portfolio to enable the primary import path.
+
 ## 2026-04-03T02:30:00-05:00 | UI premium upgrade and Meta integration diagnostics
 
 - Task: Upgrade the dashboard interface to look premium/production-grade; add Meta integration health diagnostics so operators know exactly what's blocking live data.

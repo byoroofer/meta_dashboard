@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-04T12:00:00-05:00 | Meta live import fixes and date timezone
+
+- Change summary: 8 commits fixing the Meta import fallback path iteratively. Import now populates live data. Dates now display in America/Chicago.
+- Commits (newest first): `b8bfb06`, `f79c51b`, `8dbccb5`, `f67d240`, `fd036c8`, `665d47a`, `4dd352d`, `8083917`
+- Files changed: `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `lib/utils.ts`, `components/meta/meta-sync-button.tsx`
+- Reversal steps:
+  1. `git revert b8bfb06` to restore throwing on leads permission error (re-blocks import).
+  2. `git reset --hard 63faebe` to return to the state before this entire session's work.
+  3. To roll back only the timezone change: `git revert 8083917`.
+- Notes: The META_SYSTEM_USER_ACCESS_TOKEN was rotated in Vercel this session. The old token is invalid. Do not revert the Vercel env var.
+
 ## 2026-04-03T02:30:00-05:00 | UI premium upgrade and Meta integration diagnostics
 
 - Change summary: Upgraded 18 files for visual/UX quality (shell, shared components, sidebar, header, account switcher, metric cards, data tables, empty states, filter bar, badges) and added a Meta integration health route + sync button diagnostics panel. Persisted import counts into sync_jobs.metadata. Added getConfigStatus() to env.ts without exposing secret values.
