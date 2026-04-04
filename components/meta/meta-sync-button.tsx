@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { withBasePath } from "@/lib/config/base-path";
 
 interface MetaStatus {
   config: {
@@ -77,7 +78,7 @@ export function MetaSyncButton() {
   const fetchStatus = useCallback(async () => {
     setIsLoadingStatus(true);
     try {
-      const res = await fetch("/api/meta/status");
+      const res = await fetch(withBasePath("/api/meta/status"));
       if (res.ok) {
         const data = (await res.json()) as MetaStatus;
         setStatus(data);
@@ -98,7 +99,7 @@ export function MetaSyncButton() {
     setImportMessage(null);
 
     try {
-      const res = await fetch("/api/meta/import", {
+      const res = await fetch(withBasePath("/api/meta/import"), {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
