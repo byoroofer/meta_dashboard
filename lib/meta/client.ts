@@ -14,6 +14,7 @@ interface MetaBusinessNode {
 interface MetaPageNode {
   id: string;
   name?: string;
+  access_token?: string;
   instagram_business_account?: { id: string; username?: string; name?: string } | null;
   tasks?: string[];
 }
@@ -150,8 +151,13 @@ export class MetaBusinessClient {
   /** Fallback: pages the system user can directly access (bypasses /me/businesses hierarchy) */
   async getDirectPages() {
     return this.fetchAllPages<MetaPageNode>("/me/accounts", {
-      fields: "id,name"
+      fields: "id,name,access_token,instagram_business_account{id,username,name}"
     });
+  }
+
+  /** Return a client that uses a page access token instead of the system user token */
+  withPageToken(pageAccessToken: string) {
+    return new MetaBusinessClient(pageAccessToken);
   }
 
   /** Fallback: ad accounts the system user can directly access */

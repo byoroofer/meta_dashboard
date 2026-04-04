@@ -189,7 +189,11 @@ export async function syncMetaData() {
           counts.assets += 1;
         }
 
-        const leadForms = await meta.getLeadForms(page.id);
+        // Lead forms require a Page Access Token. In fallback mode the page
+        // object includes access_token from /me/accounts; use it if present.
+        const leadFormClient =
+          useFallback && page.access_token ? meta.withPageToken(page.access_token) : meta;
+        const leadForms = await leadFormClient.getLeadForms(page.id);
 
         for (const form of leadForms) {
           const formUpsert = await client
