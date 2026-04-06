@@ -11,6 +11,8 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 
 - Frontend is a Next.js App Router application using TypeScript.
 - Shared UI primitives live under `components/ui` with feature workspaces under `components/*`.
+- A standalone Python social engagement bot scaffold now exists under `automation/social_engagement_bot` for Reddit/Facebook keyword monitoring and OpenAI-generated reply drafting, with one-shot mode, env-file loading, and intent-based reply gating.
+- A new `/marketplace-deals` operator workflow now exists for saved search presets, manual listing scans, comparable-listing review, fair-value estimation, CSV export, and operator deal tracking.
 - Primary dashboard pages now read only from live Supabase-backed sources; when admin config or live rows are missing, the UI shows empty results instead of sample data.
 - Server-side persistence paths exist for webhook and outbound messaging flows when privileged Supabase configuration is present.
 - Operators can switch the active dashboard scope by connected business and ad account from the shared header.
@@ -28,7 +30,7 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 - `lib/repositories/`: repository adapters, including current mock-backed implementations.
 - `lib/db/supabase/`: Supabase client/server/admin entry points.
 - `lib/meta/`: Meta API integration and webhook processing helpers.
-- `supabase/migrations/`: SQL migrations currently present from `0001` through `0009`.
+- `supabase/migrations/`: SQL migrations currently present from `0001` through `0012`.
 - `.agent/`: durable memory for cross-session work.
 
 ## Local Commands
@@ -38,12 +40,17 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 - Lint: `cmd /c npm run lint`
 - Typecheck: `cmd /c npm run typecheck`
 - Build: `cmd /c npm run build`
+- Python bot setup: `py -m venv automation\social_engagement_bot\.venv`
+- Python bot install: `automation\social_engagement_bot\.venv\Scripts\python -m pip install -r automation\social_engagement_bot\requirements.txt`
+- Python bot run: `automation\social_engagement_bot\.venv\Scripts\python -m automation.social_engagement_bot.bot`
+- Python bot tests: `automation\social_engagement_bot\.venv\Scripts\python -m unittest discover -s automation\social_engagement_bot\tests -p "test_*.py"`
 - Start: `cmd /c npm run start`
 
 ## Verification Baseline
 
 - No dedicated test runner is configured in `package.json`.
 - Default verification for most tasks is `typecheck`, `lint`, and `build`.
+- The Python bot adds lightweight `unittest` coverage for keyword matching and prompt construction.
 - For documentation-only changes, verify file creation, links, and repository status; note skipped code verification in the handoff.
 
 ## Environment and Safety
@@ -56,6 +63,8 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 
 - Live dashboard reads still depend on Supabase table population and incomplete upstream sync jobs.
 - The deployed Meta importer is still blocked in production until `SUPABASE_SERVICE_ROLE_KEY`, `META_APP_ID`, `META_APP_SECRET`, and `META_SYSTEM_USER_ACCESS_TOKEN` are configured.
+- The marketplace-deals feature runs end-to-end with demo adapters locally today; live source adapters are still intentionally disabled pending source-by-source legal and technical review.
 - Outbound Meta transport is not fully connected.
 - Portal target-specific adapters remain incomplete.
 - Documentation drift exists between `README.md` and the actual migration set.
+- The Python social engagement bot is file-based and standalone today; it is not wired into the dashboard UI, background jobs, or database tables.

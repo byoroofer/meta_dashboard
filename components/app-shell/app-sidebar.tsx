@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, ChevronRight, Circle } from "lucide-react";
@@ -35,7 +36,7 @@ export function AppSidebar({ user }: { user: AppUser }) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href as Route}
               className={cn(
                 "relative flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -64,7 +65,7 @@ export function AppSidebar({ user }: { user: AppUser }) {
           {secondaryNavigation.map((item) => (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href as Route}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
                 pathname.startsWith(item.href)

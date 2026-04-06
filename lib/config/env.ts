@@ -15,6 +15,11 @@ const envSchema = z.object({
   META_WEBHOOK_VERIFY_TOKEN: z.string().default(""),
   META_WEBHOOK_APP_SECRET: z.string().default(""),
   META_SYSTEM_USER_ACCESS_TOKEN: z.string().default(""),
+  META_MESSAGING_PAGE_TOKEN_MAP: z.string().default(""),
+  META_MESSAGING_PAGE_ID: z.string().default(""),
+  META_MESSAGING_PAGE_ACCESS_TOKEN: z.string().default(""),
+  OPENAI_API_KEY: z.string().default(""),
+  OPENAI_MODEL: z.string().default("gpt-5-mini"),
   ENCRYPTION_KEY: z.string().default(""),
   DASHBOARD_ADMIN_PASSWORD: z.string().default(""),
   DEMO_USER_EMAIL: z.string().default("ops@meta-dashboard.internal")
@@ -35,6 +40,11 @@ export const env = envSchema.parse({
   META_WEBHOOK_VERIFY_TOKEN: process.env.META_WEBHOOK_VERIFY_TOKEN,
   META_WEBHOOK_APP_SECRET: process.env.META_WEBHOOK_APP_SECRET,
   META_SYSTEM_USER_ACCESS_TOKEN: process.env.META_SYSTEM_USER_ACCESS_TOKEN,
+  META_MESSAGING_PAGE_TOKEN_MAP: process.env.META_MESSAGING_PAGE_TOKEN_MAP,
+  META_MESSAGING_PAGE_ID: process.env.META_MESSAGING_PAGE_ID,
+  META_MESSAGING_PAGE_ACCESS_TOKEN: process.env.META_MESSAGING_PAGE_ACCESS_TOKEN,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  OPENAI_MODEL: process.env.OPENAI_MODEL,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   DASHBOARD_ADMIN_PASSWORD: process.env.DASHBOARD_ADMIN_PASSWORD,
   DEMO_USER_EMAIL: process.env.DEMO_USER_EMAIL
@@ -50,6 +60,65 @@ export const hasMetaConfig = Boolean(
 );
 export const hasMetaSystemUser = Boolean(env.META_SYSTEM_USER_ACCESS_TOKEN);
 
+function parseMessagingPageTokenMap(raw: string) {
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+
+    return Object.fromEntries(
+      Object.entries(parsed).flatMap(([pageId, token]) =>
+        typeof pageId === "string" && typeof token === "string" && pageId && token
+          ? [[pageId, token]]
+          : []
+      )
+    );
+  } catch {
+    const normalized = trimmed.replace(/^\{/, "").replace(/\}$/, "");
+
+    return Object.fromEntries(
+      normalized
+        .split(",")
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+        .flatMap((entry) => {
+          const separatorIndex = entry.indexOf(":");
+
+          if (separatorIndex <= 0) {
+            return [];
+          }
+
+          const pageId = entry.slice(0, separatorIndex).trim().replace(/^"|"$/g, "");
+          const token = entry.slice(separatorIndex + 1).trim().replace(/^"|"$/g, "");
+
+          return pageId && token ? [[pageId, token]] : [];
+        })
+    );
+  }
+}
+
+const configuredMessagingPageTokenMap = parseMessagingPageTokenMap(env.META_MESSAGING_PAGE_TOKEN_MAP);
+
+if (env.META_MESSAGING_PAGE_ID && env.META_MESSAGING_PAGE_ACCESS_TOKEN) {
+  configuredMessagingPageTokenMap[env.META_MESSAGING_PAGE_ID] = env.META_MESSAGING_PAGE_ACCESS_TOKEN;
+}
+
+export function getMetaMessagingPageToken(pageId: string) {
+  return configuredMessagingPageTokenMap[pageId] ?? "";
+}
+
+export function getMetaMessagingPageOverridePageIds() {
+  return Object.keys(configuredMessagingPageTokenMap);
+}
+
+export function getMetaMessagingPageOverrideCount() {
+  return getMetaMessagingPageOverridePageIds().length;
+}
+
 /** Full status of every runtime config gate, safe to pass to server components. No secret values included. */
 export function getConfigStatus() {
   return {
@@ -58,6 +127,9 @@ export function getConfigStatus() {
     metaAppCredentials: Boolean(env.META_APP_ID && env.META_APP_SECRET),
     metaWebhook: Boolean(env.META_WEBHOOK_VERIFY_TOKEN && env.META_WEBHOOK_APP_SECRET),
     metaSystemUser: Boolean(env.META_SYSTEM_USER_ACCESS_TOKEN),
+    metaMessagingPageOverride: getMetaMessagingPageOverrideCount() > 0,
+    metaMessagingPageOverrideCount: getMetaMessagingPageOverrideCount(),
+    openAiPricing: Boolean(env.OPENAI_API_KEY),
     encryptionKey: Boolean(env.ENCRYPTION_KEY),
     adminPassword: Boolean(env.DASHBOARD_ADMIN_PASSWORD)
   };

@@ -9,6 +9,7 @@ Private internal business dashboard for supported Meta business and professional
 - CRM contact history
 - Raw webhook and message archive preservation
 - Portal command dispatch into websites, databases, internal tables, and Meta business assets
+- Marketplace deal scanning, comparable-listing analysis, and AI-assisted pricing review
 
 ## Architecture Summary
 
@@ -19,6 +20,8 @@ Private internal business dashboard for supported Meta business and professional
 - `supabase/migrations/`: paste-ready SQL schema, indexes, views, and helper functions
 
 The UI still uses typed mock repositories for page rendering, but the webhook and outbound send routes now include a real server-side persistence path when `SUPABASE_SERVICE_ROLE_KEY` is configured. The portal layer is also scaffolded so command dispatch can later target Meta, client websites, databases, and internal operational tables from one admin surface.
+
+The dashboard also now includes a `/marketplace-deals` surface for saved search targets, scan history, AI-assisted pricing analysis, comparable-listing review, CSV export, and operator status tracking. The initial adapter set is intentionally demo-only until source-specific API integrations or robots-safe public adapters are approved.
 
 ## Message Copy System
 
@@ -67,7 +70,12 @@ Copy `.env.example` to `.env.local` and fill in:
 - `META_WEBHOOK_VERIFY_TOKEN`
 - `META_WEBHOOK_APP_SECRET`
 - `META_SYSTEM_USER_ACCESS_TOKEN`
+- `OPENAI_API_KEY`
 - `ENCRYPTION_KEY`
+
+Optional:
+
+- `OPENAI_MODEL`
 
 ## Local Setup
 
@@ -97,6 +105,37 @@ cmd /c npm run lint
 cmd /c npm run build
 ```
 
+## Python Social Engagement Bot
+
+A separate Python bot scaffold now lives under `automation/social_engagement_bot/`.
+
+It can:
+
+- monitor Reddit submissions/comments across configured subreddits
+- poll Facebook Page posts/comments for configured Page IDs
+- detect configured keywords
+- generate replies with the OpenAI Responses API
+- default to `DRY_RUN=true` so replies are drafted to a local log before any posting happens
+- optionally load a dedicated env file with `BOT_ENV_FILE=...`
+- run a single safe polling cycle with `BOT_ONE_SHOT=true`
+- require a clear question or buying/help intent before drafting a reply
+
+Setup and run:
+
+```powershell
+py -m venv automation\social_engagement_bot\.venv
+automation\social_engagement_bot\.venv\Scripts\python -m pip install -r automation\social_engagement_bot\requirements.txt
+automation\social_engagement_bot\.venv\Scripts\python -m automation.social_engagement_bot.bot
+```
+
+Targeted bot tests:
+
+```powershell
+automation\social_engagement_bot\.venv\Scripts\python -m unittest discover -s automation\social_engagement_bot\tests -p "test_*.py"
+```
+
+Populate credentials and bot settings from `automation/social_engagement_bot/.env.social-bot.example` before running. Keep `DRY_RUN=true` until you have reviewed the generated drafts and confirmed your platform permissions and posting rules.
+
 ## Supabase
 
 Apply the migration files in order:
@@ -107,8 +146,14 @@ Apply the migration files in order:
 - `supabase/migrations/0004_automation_and_lead_delivery.sql`
 - `supabase/migrations/0005_message_copy_constraints.sql`
 - `supabase/migrations/0006_portal_command_center.sql`
+- `supabase/migrations/0007_first_party_customer_data.sql`
+- `supabase/migrations/0008_first_party_customer_data_indexes_and_constraints.sql`
+- `supabase/migrations/0009_first_party_customer_data_views.sql`
+- `supabase/migrations/0010_shared_ad_account_links.sql`
+- `supabase/migrations/0011_immutable_communication_archive.sql`
+- `supabase/migrations/0012_marketplace_deals.sql`
 
-These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, message-copy dedupe, and portal command-center structures.
+These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, message-copy dedupe, portal command-center, and marketplace-deals structures.
 
 ## Deployment
 
@@ -125,3 +170,4 @@ These migrations create the required operational, archive, sync, audit, auto-res
 - Expand webhook normalization for additional Meta event shapes beyond the current supported message path
 - Add queue-backed retries and dead-letter handling for failed normalizations and failed command executions
 - Activate real admin auth and MFA enforcement
+- Decide whether the Python social engagement bot should remain standalone or be integrated into the dashboard's operational surfaces

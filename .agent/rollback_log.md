@@ -2,6 +2,310 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T10:55:13.2914491-05:00 | Marketplace-deals feature, schema, and API surface
+
+- Change summary: Added the new `/marketplace-deals` dashboard page and listing-detail page, new marketplace API routes, a modular marketplace engine (`lib/marketplace/**`), a new repository/service pair for saved searches and scan persistence, a new Supabase migration `0012_marketplace_deals.sql`, new OpenAI env plumbing, and README/memory updates. The initial enabled adapters are demo-only and the marketplace pages were forced dynamic after build verification.
+- Files changed: `app/(dashboard)/marketplace-deals/page.tsx`, `app/(dashboard)/marketplace-deals/[listingId]/page.tsx`, `app/api/marketplace-deals/saved-searches/route.ts`, `app/api/marketplace-deals/scans/route.ts`, `app/api/marketplace-deals/results/route.ts`, `app/api/marketplace-deals/listings/[listingId]/route.ts`, `app/api/marketplace-deals/listings/[listingId]/status/route.ts`, `app/api/marketplace-deals/export/route.ts`, `components/app-shell/app-sidebar.tsx`, `components/marketplace/listing-detail-panel.tsx`, `components/marketplace/marketplace-deals-workspace.tsx`, `lib/config/env.ts`, `lib/navigation.ts`, `lib/marketplace/adapters/index.ts`, `lib/marketplace/ai.ts`, `lib/marketplace/comparison.ts`, `lib/marketplace/csv.ts`, `lib/marketplace/demo-data.ts`, `lib/marketplace/normalization.ts`, `lib/marketplace/schemas.ts`, `lib/repositories/marketplace-deals-repository.ts`, `lib/services/marketplace-deals-service.ts`, `supabase/migrations/0012_marketplace_deals.sql`, `types/database.ts`, `types/marketplace.ts`, `README.md`, `.env.example`, `.agent/project_overview.md`, `.agent/open_issues.md`, `.agent/decisions.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run typecheck`; `cmd /c npm run lint`; `cmd /c npm run build`
+- Reversal steps:
+  1. Delete `app/(dashboard)/marketplace-deals/**`, `app/api/marketplace-deals/**`, `components/marketplace/**`, `lib/marketplace/**`, `lib/repositories/marketplace-deals-repository.ts`, `lib/services/marketplace-deals-service.ts`, `types/marketplace.ts`, and `supabase/migrations/0012_marketplace_deals.sql`.
+  2. Revert the marketplace-related edits in `components/app-shell/app-sidebar.tsx`, `lib/navigation.ts`, `lib/config/env.ts`, `types/database.ts`, `README.md`, `.env.example`, and the `.agent/` files.
+  3. Rerun `cmd /c npm run typecheck`, `cmd /c npm run lint`, and `cmd /c npm run build`.
+  4. If the rollback is meant to preserve docs history, append a correction entry in the `.agent/` files instead of deleting history.
+- Notes: The feature is safe to keep in demo mode today. Real market-data usage still requires future source-specific live adapters.
+
+## 2026-04-06T08:18:27.6835584-05:00 | Scoped Meta source diagnostics and Page-backed IG request-node fix
+
+- Change summary: Added per-source Meta conversation diagnostics to sync-job/audit metadata, deployed production, used the first live diagnostics run to catch an IG request-node bug (`/{ig-business-account-id}/conversations`), switched the IG history path back to the Page-backed conversations edge, redeployed, and verified that the Brooke Vinson scoped inbox now shows 2 conversations in production.
+- Files changed: `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/open_issues.md`, `.agent/decisions.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run typecheck`; `cmd /c npm run lint`; `cmd /c npm run build` (twice); `cmd /c npx vercel deploy --prod --yes` (twice); production Node HTTPS checks against auth, scoped import, inbox conversations, and connected-asset logs
+- Reversal steps:
+  1. Remove `MetaPagedCollection` and `getConversationsWithDiagnostics(...)` from `lib/meta/client.ts`.
+  2. Remove `conversationSourceDiagnostics` writes from `lib/meta/sync-service.ts`.
+  3. Restore the old IG request node if this diagnosis is later proven wrong.
+  4. Redeploy production.
+  5. Revert the `.agent/` memory-file updates if this log entry is incorrect.
+- Notes: The first live diagnostics run exposed the direct IG conversations edge bug immediately. After the Page-backed fix, the Brooke asset moved from 1 to 2 conversations, but one new thread still has 0 imported messages and needs further inspection.
+
+## 2026-04-05T19:51:51.5891345-05:00 | IG external-ID fix and direct Meta validation
+
+- Change summary: Fixed the Instagram importer to use the external Meta IG business account ID instead of the internal connected-asset UUID, redeployed production, and directly validated with the new user token that Meta still returns only one Page-backed Instagram conversation while rejecting the direct IG conversations edge with capability error `(#3)`.
+- Files changed: `lib/meta/sync-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run lint`; `cmd /c npm run typecheck`; `cmd /c npm run build`; `cmd /c npx vercel deploy --prod --yes`; live production and direct Meta Graph `Invoke-RestMethod` / `Invoke-WebRequest` checks
+- Reversal steps:
+  1. Restore the previous IG asset-ID wiring in `lib/meta/sync-service.ts`.
+  2. Redeploy production.
+  3. Revert the `.agent/` memory-file updates if this log entry is incorrect.
+- Notes: This fixed a genuine importer bug, but it did not increase the number of IG conversations Meta exposes for `brookevinson`.
+
+## 2026-04-05T18:54:23.1561855-05:00 | Four-phase inbox import and richer archive/contact enrichment
+
+- Change summary: Split historical inbox import into four lighter Meta request phases, added thread-detail and participant-profile fetches, enriched contact records with Meta profile data, archived separate thread/profile snapshots, redeployed production, and verified another successful `Brooke Vinson` scoped sync.
+- Files changed: `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run lint`; `cmd /c npm run typecheck`; `cmd /c npm run build`; `cmd /c npx vercel deploy --prod --yes`; live production `Invoke-RestMethod` / `Invoke-WebRequest` checks for scoped import, connected-asset logs, and archive queries
+- Reversal steps:
+  1. Remove `getConversationDetails(...)` and `getParticipantProfile(...)` from `lib/meta/client.ts`.
+  2. Remove the new contact enrichment fields, thread/profile archive events, and expanded message archive payload additions from `lib/meta/sync-service.ts`.
+  3. Redeploy production.
+  4. Revert the `.agent/` memory-file updates if this log entry is incorrect.
+- Notes: The live `Brooke Vinson` scoped sync still succeeded after this enrichment pass with `1` conversation and `109` messages.
+
+## 2026-04-05T18:44:57.9687821-05:00 | Lighter IG message-history fetch and live Brooke Vinson verification
+
+- Change summary: Reduced Meta conversation-message payload size, passed platform-specific limits into historical message import, redeployed production, and verified a successful live `Brooke Vinson` scoped sync.
+- Files changed: `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run lint`; `cmd /c npm run typecheck`; `cmd /c npm run build`; `cmd /c npx vercel deploy --prod --yes`; live production `Invoke-RestMethod` / `Invoke-WebRequest` calls for scoped import and inbox verification
+- Reversal steps:
+  1. Restore the previous `getConversationMessages(...)` field set and higher limits in `lib/meta/client.ts`.
+  2. Restore the heavier attachment metadata mapping in `lib/meta/sync-service.ts` if it must be preserved despite the Meta payload limit.
+  3. Redeploy production.
+  4. Revert the `.agent/` memory-file updates if this log entry is incorrect.
+- Notes: The live `Brooke Vinson` scoped import succeeded after this change with `1` conversation and `109` messages imported.
+
+## 2026-04-05T18:37:23.5738896-05:00 | IG-only scoped sync narrowing and sync-button error handling
+
+- Change summary: Narrowed Instagram asset scoped sync so it only imports IG conversations, narrowed Page asset scoped sync so it stays Page-specific, hardened the sync button against non-JSON error responses, and redeployed production.
+- Files changed: `lib/meta/sync-service.ts`, `components/meta/meta-sync-button.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/open_issues.md`, `.agent/session_handoff.md`
+- State-changing commands: live `Invoke-WebRequest` / `Invoke-RestMethod` checks against production auth, connected-accounts, import, inbox, leads, and audit routes; `cmd /c npm run lint`; `cmd /c npm run typecheck`; `cmd /c npm run build`; `cmd /c npx vercel deploy --prod --yes` (twice)
+- Reversal steps:
+  1. Remove the `conversationPlatforms` and `includeLeads` narrowing from `lib/meta/sync-service.ts`.
+  2. Restore `components/meta/meta-sync-button.tsx` to the prior response-parsing behavior if the text-first approach should be rolled back.
+  3. Redeploy production.
+  4. Revert the `.agent/` memory-file updates if this record is incorrect.
+- Notes: The production `Brooke Vinson` asset still showed zero conversations/leads immediately after the first scoped attempt, but operators should now see the actual backend error text instead of the JSON parse exception on the next attempt.
+
+## 2026-04-05T18:23:23.6479562-05:00 | Scoped Meta sync for inbox and leads
+
+- Change summary: Added a scoped Meta sync path for the currently selected business or Page/Instagram asset, wired the API route to accept `businessId`/`assetId`, updated the sync button to post the active scope, added the same control to the Leads page, and deployed production.
+- Files changed: `lib/meta/sync-service.ts`, `app/api/meta/import/route.ts`, `components/meta/meta-sync-button.tsx`, `components/leads/leads-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/open_issues.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run lint`; `cmd /c npm run typecheck`; `cmd /c npm run build`; `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Remove the scoped-sync helpers and `SyncMetaDataOptions` path from `lib/meta/sync-service.ts`.
+  2. Restore `app/api/meta/import/route.ts` to always call the full importer with no request-body scope.
+  3. Restore `components/meta/meta-sync-button.tsx` to always trigger a full sync and remove the scoped button labels.
+  4. Remove `MetaSyncButton` from `components/leads/leads-workspace.tsx` if the leads page should not expose sync controls.
+  5. Redeploy production.
+  6. Revert the `.agent/` memory-file updates if this log entry is incorrect.
+- Notes: This does not remove the full-import timeout; it adds a practical production workaround so newly assigned assets can be populated without waiting for a broad import to finish.
+
+## 2026-04-05T15:31:59.2269525-05:00 | Multi-page Meta messaging token support
+
+- Change summary: Added support for multiple configured Meta Page messaging tokens, including a configured-page fallback import path for pages the system-user discovery path does not return, and deployed production with a two-page token map for Elite Cleaning and TJ Ware for Congress.
+- Files changed: `.env.example`, `lib/config/env.ts`, `lib/meta/sync-service.ts`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `npx vercel env add META_MESSAGING_PAGE_TOKEN_MAP production --value ...`; `cmd /c npx vercel deploy --prod --yes --force`; `cmd /c npx vercel env pull .tmp-vercel.env --environment production --yes`; live `curl.exe` verification against `https://tjware.me/meta-dashboard/api/meta/status`, `.../api/meta/import`, and `.../api/connected-accounts`
+- Reversal steps:
+  1. Remove `META_MESSAGING_PAGE_TOKEN_MAP` from `.env.example`.
+  2. Remove the multi-page parser/helpers from `lib/config/env.ts`.
+  3. Remove the configured-page fallback import path from `lib/meta/sync-service.ts` and fall back to the legacy single-page override only.
+  4. Remove the production `META_MESSAGING_PAGE_TOKEN_MAP` env var or leave it unused.
+  5. Redeploy production.
+  6. Revert the `.agent/` memory-file updates if this record is incorrect.
+- Notes: Production config verified live with `metaMessagingPageOverrideCount: 2`, but a full production import still times out before the second-page import can be confirmed.
+
+## 2026-04-05T15:28:01.9399370-05:00 | Harden standalone Python bot runtime
+
+- Change summary: Added env-file loading, one-shot execution, intent-based reply gating, richer draft metadata, and updated tests/docs for the standalone Python social engagement bot.
+- Files changed: `automation/social_engagement_bot/.env.social-bot.example`, `automation/social_engagement_bot/README.md`, `automation/social_engagement_bot/bot.py`, `automation/social_engagement_bot/config.py`, `automation/social_engagement_bot/facebook_client.py`, `automation/social_engagement_bot/filters.py`, `automation/social_engagement_bot/models.py`, `automation/social_engagement_bot/reddit_client.py`, `automation/social_engagement_bot/requirements.txt`, `automation/social_engagement_bot/state.py`, `automation/social_engagement_bot/tests/test_filters.py`, `README.md`, `.agent/project_overview.md`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `& 'C:\Users\warep\AppData\Local\Programs\Python\Launcher\py.exe' -m unittest discover -s automation/social_engagement_bot/tests -p "test_*.py"`; `& 'C:\Users\warep\AppData\Local\Programs\Python\Launcher\py.exe' -m compileall automation/social_engagement_bot`
+- Reversal steps:
+  1. Remove the new `BOT_ENV_FILE`, `BOT_ONE_SHOT`, and `BOT_REQUIRE_QUESTION_OR_INTENT` support from the bot files.
+  2. Restore the previous draft payload shape and author-filter behavior if the stricter flow is not desired.
+  3. Revert the README and `.agent/` updates associated with this hardening pass.
+- Notes: This pass focused on safer defaults rather than new platform coverage.
+
+## 2026-04-05T15:20:30.5104131-05:00 | Standalone Python social engagement bot scaffold
+
+- Change summary: Added an isolated Python social engagement bot under `automation/social_engagement_bot` with Reddit/Facebook polling, OpenAI-generated replies, file-based dedupe/draft persistence, lightweight tests, and matching documentation updates.
+- Files changed: `automation/__init__.py`, `automation/social_engagement_bot/.gitignore`, `automation/social_engagement_bot/.env.social-bot.example`, `automation/social_engagement_bot/README.md`, `automation/social_engagement_bot/__init__.py`, `automation/social_engagement_bot/bot.py`, `automation/social_engagement_bot/config.py`, `automation/social_engagement_bot/facebook_client.py`, `automation/social_engagement_bot/filters.py`, `automation/social_engagement_bot/models.py`, `automation/social_engagement_bot/openai_client.py`, `automation/social_engagement_bot/prompting.py`, `automation/social_engagement_bot/reddit_client.py`, `automation/social_engagement_bot/requirements.txt`, `automation/social_engagement_bot/state.py`, `automation/social_engagement_bot/tests/test_filters.py`, `automation/social_engagement_bot/tests/test_prompting.py`, `.gitignore`, `README.md`, `.agent/project_overview.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/decisions.md`, `.agent/open_issues.md`, `.agent/session_handoff.md`
+- State-changing commands: `& 'C:\Users\warep\AppData\Local\Programs\Python\Launcher\py.exe' -m unittest discover -s automation/social_engagement_bot/tests -p "test_*.py"`; `& 'C:\Users\warep\AppData\Local\Programs\Python\Launcher\py.exe' -m compileall automation/social_engagement_bot`
+- Reversal steps:
+  1. Delete `automation/social_engagement_bot/` and `automation/__init__.py`.
+  2. Remove the Python cache ignore lines from `.gitignore` if they are no longer desired.
+  3. Remove the Python bot sections from `README.md` and `.agent/project_overview.md`.
+  4. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: Verification passed after rerunning the Python commands with the resolved launcher path outside the sandbox because the current PowerShell environment did not expose `py` directly.
+
+## 2026-04-05T09:02:38.6804244-05:00 | Deploy root privacy policy URL
+
+- Change summary: Replaced the placeholder privacy page with a Meta-facing privacy policy, added a root `/privacy` rewrite, deployed production, and verified the live URL.
+- Files changed: `app/privacy/page.tsx`, `vercel.json`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npx vercel deploy --prod --yes --force`
+- Reversal steps:
+  1. Restore the previous `app/privacy/page.tsx` content.
+  2. Remove the `/privacy` rewrite from `vercel.json`.
+  3. Redeploy production.
+  4. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: Live verification of `https://tjware.me/privacy` returned HTTP `200` after deployment.
+
+## 2026-04-05T08:57:38.4793892-05:00 | Deploy live data deletion callback
+
+- Change summary: Deployed the new Meta data deletion callback route to production and verified the live root URL responds correctly on `tjware.me`.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npx vercel deploy --prod --yes --force`
+- Reversal steps:
+  1. Redeploy a prior production deployment if the live callback should be removed immediately.
+  2. Revert the callback-route changes locally and redeploy production if the feature should be rolled back permanently.
+  3. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: Live verification of `https://tjware.me/api/meta/data-deletion?confirmation_code=test-code` returned success JSON after deployment.
+
+## 2026-04-05T08:53:18.1336930-05:00 | Meta data deletion callback route
+
+- Change summary: Added a public Meta data deletion callback API route, a public status page, and the required auth/rewrite wiring so Meta can call a stable root URL.
+- Files changed: `app/api/meta/data-deletion/route.ts`, `app/data-deletion-status/page.tsx`, `proxy.ts`, `vercel.json`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: no external systems mutated; verification commands were `cmd /c npm run lint`, `cmd /c npm run build`, and `cmd /c npm run typecheck`
+- Reversal steps:
+  1. Delete `app/api/meta/data-deletion/route.ts`.
+  2. Delete `app/data-deletion-status/page.tsx`.
+  3. Remove the public-path exceptions in `proxy.ts`.
+  4. Remove the `/api/meta/data-deletion` rewrite from `vercel.json`.
+  5. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: This route is implemented locally and still needs a production deploy before the root callback URL will work on `tjware.me`.
+
+## 2026-04-05T08:50:04.7160947-05:00 | DASH app icon asset creation
+
+- Change summary: Created a `DASH` Meta app icon as SVG source plus PNG/JPG exports under `public/brand/`.
+- Files changed: `public/brand/meta-dashboard-app-icon.svg`, `public/brand/meta-dashboard-app-icon.png`, `public/brand/meta-dashboard-app-icon.jpg`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: local file generation only; used PowerShell `System.Drawing` export commands and image verification
+- Reversal steps:
+  1. Delete `public/brand/meta-dashboard-app-icon.svg`.
+  2. Delete `public/brand/meta-dashboard-app-icon.png`.
+  3. Delete `public/brand/meta-dashboard-app-icon.jpg`.
+  4. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: The first bitmap export failed due to a font-constructor issue and was rerun successfully.
+
+## 2026-04-05T08:39:41.3968720-05:00 | Live sync retry with exact Meta permission error
+
+- Change summary: Reran the live production Meta sync after the user's permission changes and captured the exact production inbox-history error in the sync status output.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/open_issues.md`, `.agent/session_handoff.md`
+- State-changing commands: `Invoke-WebRequest https://tjware.me/meta-dashboard/api/meta/import -Method POST`
+- Reversal steps:
+  1. No code or schema rollback is needed because this task did not change runtime files.
+  2. Rerun the live sync after publishing the app or fixing Page role assignment.
+  3. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: Meta returned `(#200) Requires permission: pages_messaging or User associated with the Page access token does not have an appropriate role on the Page.`
+
+## 2026-04-04T21:26:53.2633957-05:00 | Inbox-history skip diagnostics
+
+- Change summary: Extended the Meta importer to retain exact inbox-history skip reasons in `sync_jobs.metadata` and `audit_logs.metadata`, and to include the first skip reason in the sync detail string.
+- Files changed: `lib/meta/sync-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: no external systems mutated; verification commands were `cmd /c npm run lint`, `cmd /c npm run build`, and `cmd /c npm run typecheck`
+- Reversal steps:
+  1. Remove the `inboxHistorySkips` collection and metadata/detail updates from `lib/meta/sync-service.ts`.
+  2. Restore the previous sync-job and audit-log metadata shape if needed.
+  3. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: This does not grant any new Meta access. It only makes the existing skip reason visible on the next live sync.
+
+## 2026-04-04T21:25:03.6177924-05:00 | Remove optimistic Meta messaging-scope claims
+
+- Change summary: Removed hardcoded messaging/lead scope claims from the Meta importer so the dashboard no longer reports capabilities the live token does not actually have.
+- Files changed: `lib/meta/sync-service.ts`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: no external systems mutated; verification commands were `cmd /c npm run lint`, `cmd /c npm run build`, and `cmd /c npm run typecheck`
+- Reversal steps:
+  1. Restore the previous hardcoded `granted_scopes` arrays in `lib/meta/sync-service.ts`.
+  2. Revert the `.agent/open_issues.md` updates if the debugger findings were recorded incorrectly.
+  3. Revert the `.agent/` memory-file edits if this log entry is incorrect.
+- Notes: This is a correctness fix for displayed/imported capability state, not a functional permission grant. Actual inbox import still depends on Meta issuing the missing scopes.
+
+## 2026-04-04T21:06:24.1720898-05:00 | Production Meta token rotation and live resync
+
+- Change summary: Replaced the production Meta system-user token in Vercel, redeployed production, and reran the live Meta sync plus inbox verification.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npx vercel env add META_SYSTEM_USER_ACCESS_TOKEN production --value ... --yes --sensitive --force`; `cmd /c npx vercel deploy --prod --yes --force`; `Invoke-WebRequest https://tjware.me/meta-dashboard/api/meta/import -Method POST`
+- Reversal steps:
+  1. Restore the previous production token in Vercel if the new token should be rolled back.
+  2. Redeploy production so the restored token takes effect.
+  3. Rerun the live sync after any Meta-side permission changes.
+  4. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: The new token did not change inbox import results; production still returned `conversations=0`, `messages=0`, and `inboxHistorySkipped=1`.
+
+## 2026-04-04T20:18:41.5299047-05:00 | Live production Meta sync verification
+
+- Change summary: Logged into the deployed dashboard, triggered a real production Meta sync, and verified the production inbox API state afterward.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `Invoke-WebRequest https://tjware.me/meta-dashboard/api/auth/login -Method POST`; `Invoke-WebRequest https://tjware.me/meta-dashboard/api/meta/import -Method POST`
+- Reversal steps:
+  1. No code or schema rollback is needed because this task did not change repo files beyond memory updates.
+  2. To supersede the remote sync result, correct the Meta messaging-access issue and rerun the live sync.
+  3. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: The live sync succeeded, but imported `0` conversations and `0` messages with `inboxHistorySkipped: 1`, and the deployed inbox API still returned an empty array.
+
+## 2026-04-04T20:18:41.5299047-05:00 | Inbox-side Meta sync control
+
+- Change summary: Added the Meta sync control directly to the inbox workspace, updated the empty-state guidance, and expanded sync success feedback to include conversation/message counts for inbox population confirmation.
+- Files changed: `components/inbox/inbox-workspace.tsx`, `components/meta/meta-sync-button.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: no external systems mutated; verification commands were `cmd /c npm run build`, `cmd /c npm run lint`, and `cmd /c npm run typecheck`
+- Reversal steps:
+  1. Remove `MetaSyncButton` from `components/inbox/inbox-workspace.tsx`.
+  2. Restore the previous inbox empty-state copy in `components/inbox/inbox-workspace.tsx`.
+  3. Revert `components/meta/meta-sync-button.tsx` to the previous sync summary text if the expanded counts should not be shown.
+  4. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: The first `typecheck` run again depended on fresh Next-generated route types, so `build` had to run before the final passing `typecheck`.
+
+## 2026-04-04T20:11:58.3626442-05:00 | Populate archive messages with real message rows
+
+- Change summary: Added a scoped message aggregator, updated the archive service and API to return actual message rows, and updated the archive message workspace to display populated message copies plus snapshot metadata.
+- Files changed: `lib/repositories/dashboard-repository.ts`, `lib/services/archive-service.ts`, `app/api/archive/messages/route.ts`, `components/archive/archive-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: no external systems mutated; verification commands were `cmd /c npm run build`, `cmd /c npm run lint`, and `cmd /c npm run typecheck`
+- Reversal steps:
+  1. Remove `getMessages(scope)` from `lib/repositories/dashboard-repository.ts`.
+  2. Restore the previous `messages` source in `lib/services/archive-service.ts`.
+  3. Revert `app/api/archive/messages/route.ts` to the previous archive-event-only payload if needed.
+  4. Revert the actual-message rendering changes in `components/archive/archive-workspace.tsx`.
+  5. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: The first `typecheck` run depended on fresh Next-generated route types, so `build` had to run before the final passing `typecheck`.
+
+## 2026-04-04T20:03:29.5818340-05:00 | Browseable immutable archive viewer
+
+- Change summary: Reworked the archive workspace and its API/service/repository contract to expose the immutable communication archive as a readable dashboard surface, then deployed the updated viewer to production.
+- Checkpoint before archive/import work: `b42360b3314007e3ab3e431f455a4296cf3df5be`
+- Files changed: `components/archive/archive-workspace.tsx`, `app/api/archive/messages/route.ts`, `lib/services/archive-service.ts`, `lib/repositories/dashboard-repository.ts`, `types/domain.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Revert `components/archive/archive-workspace.tsx` to the prior archive UI.
+  2. Revert `app/api/archive/messages/route.ts`, `lib/services/archive-service.ts`, `lib/repositories/dashboard-repository.ts`, and `types/domain.ts` to the previous archive payload shape.
+  3. Redeploy production after the revert if the live archive viewer must be removed.
+  4. Or reset to `b42360b3314007e3ab3e431f455a4296cf3df5be` if the entire importer/archive track needs to be abandoned.
+  5. Revert the `.agent/` memory-file edits if this log entry is incorrect.
+- Notes: This change improves visibility only; archive immutability remains enforced by the append-only database layer introduced earlier.
+
+## 2026-04-04T20:00:37.5998814-05:00 | Connected-asset message and lead log retrieval endpoint
+
+- Change summary: Added a new connected-asset logs API route, service assembly layer, repository helpers, and shared types so one request can retrieve message threads/messages and leads/lead activities for a specific connected asset.
+- Files changed: `types/domain.ts`, `lib/repositories/dashboard-repository.ts`, `lib/services/connected-asset-logs-service.ts`, `app/api/connected-assets/[assetId]/logs/route.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: no external systems mutated; verification commands were `cmd /c npm run typecheck`, `cmd /c npm run lint`, and `cmd /c npm run build`
+- Reversal steps:
+  1. Delete `app/api/connected-assets/[assetId]/logs/route.ts`.
+  2. Delete `lib/services/connected-asset-logs-service.ts`.
+  3. Revert the added repository helpers in `lib/repositories/dashboard-repository.ts`.
+  4. Revert the added connected-asset log types in `types/domain.ts`.
+  5. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: This change is additive only and does not modify database state, production deployments, or external credentials.
+
+## 2026-04-04T17:05:02-05:00 | Immutable communication archive layer
+
+- Change summary: Added separate append-only communication archive tables and writer logic, wired archive writes into inbound webhooks, outbound sends, and historical inbox import, deployed production, and pushed migration `0011_immutable_communication_archive.sql` to the linked Supabase project.
+- Checkpoint before archive/import work: `b42360b3314007e3ab3e431f455a4296cf3df5be`
+- Files changed: `supabase/migrations/0011_immutable_communication_archive.sql`, `lib/archive/communication-archive.ts`, `lib/meta/message-preservation.ts`, `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `types/database.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/open_issues.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npx vercel deploy --prod --yes`; `cmd /c npx supabase db push --linked`
+- Reversal steps:
+  1. `git reset --hard b42360b3314007e3ab3e431f455a4296cf3df5be` to return to the exact checkpoint before import/archive work.
+  2. If the remote schema must be reversed, create and apply a new corrective migration that drops or disables `communication_archive_events`, `communication_archive_attachments`, and `prevent_archive_mutation`.
+  3. Or revert `lib/archive/communication-archive.ts`, `lib/meta/message-preservation.ts`, `lib/meta/client.ts`, `lib/meta/sync-service.ts`, and `types/database.ts` selectively once the current work is committed.
+  4. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: The new archive layer is database-backed because local files are not durable on Vercel. Call/video-call capture still depends on live Meta payload availability.
+
+## 2026-04-04T16:26:58-05:00 | Historical inbox backfill and importer access hardening
+
+- Change summary: Added page conversation/message history import support, normalized historical inbox data into the existing conversation/message/archive tables, and made missing inbox-history access skip gracefully instead of aborting the full Meta import.
+- Checkpoint before this work: `b42360b3314007e3ab3e431f455a4296cf3df5be`
+- Files changed: `lib/meta/client.ts`, `lib/meta/sync-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/open_issues.md`, `.agent/session_handoff.md`
+- State-changing commands: `git commit -m "Checkpoint current UI state before import work"`; `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. `git reset --hard b42360b3314007e3ab3e431f455a4296cf3df5be` to return to the exact pre-import-work checkpoint.
+  2. Or revert `lib/meta/client.ts` and `lib/meta/sync-service.ts` once the current work is committed if only the importer changes need to be removed.
+  3. Revert the `.agent/` memory-file edits if this record is incorrect.
+- Notes: TypeScript and ESLint passed after the importer changes. Production deploy completed, but the new import flow still depends on external Meta permissions/business settings to populate data.
+
 ## 2026-04-04T16:09:06-05:00 | Inbox, leads, and ads UI upgrade pass
 
 - Change summary: Replaced the inbox table with a conversation-list UI and richer thread/composer, replaced the leads table with a kanban-style board, and added ad reporting trend cards with inline sparklines.

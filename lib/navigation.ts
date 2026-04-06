@@ -3,6 +3,7 @@ import {
   BarChart3,
   BookUser,
   Boxes,
+  BriefcaseBusiness,
   Home,
   Inbox,
   Lock,
@@ -16,6 +17,7 @@ export const primaryNavigation = [
   { href: "/leads", label: "Leads", icon: BookUser },
   { href: "/ads", label: "Ads", icon: BarChart3 },
   { href: "/contacts", label: "Contacts", icon: Boxes },
+  { href: "/marketplace-deals", label: "Marketplace Deals", icon: BriefcaseBusiness },
   { href: "/archive", label: "Archive", icon: Archive },
   { href: "/connected-accounts", label: "Connected Accounts", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings }
@@ -32,6 +34,7 @@ export const pageTitles: Record<string, string> = {
   "/leads": "Lead pipeline",
   "/ads": "Ad account reporting",
   "/contacts": "CRM contacts",
+  "/marketplace-deals": "Marketplace deal intelligence",
   "/archive": "Archive and preservation",
   "/connected-accounts": "Connected Meta assets",
   "/settings": "Settings",
