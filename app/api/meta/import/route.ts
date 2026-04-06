@@ -21,7 +21,8 @@ export async function POST(request: Request) {
 
     const result = await syncMetaData({
       businessId: cleanValue(payload.businessId),
-      assetId: cleanValue(payload.assetId)
+      assetId: cleanValue(payload.assetId),
+      pageId: cleanValue(payload.pageId)
     });
     return NextResponse.json({ success: true, data: result });
   } catch (error) {

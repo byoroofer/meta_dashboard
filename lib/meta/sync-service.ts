@@ -992,6 +992,7 @@ type SyncablePage = {
 export interface SyncMetaDataOptions {
   businessId?: string;
   assetId?: string;
+  pageId?: string;
 }
 
 function createSyncCounts(): SyncCounts {
@@ -1055,6 +1056,28 @@ async function getAssetRow(client: AdminClient, assetId: string) {
     throw new Error("Selected asset was not found.");
   }
 
+  return result.data as Row;
+}
+
+async function ensureConfiguredBusinessRow(client: AdminClient, startedAt: string) {
+  const result = await client
+    .from("connected_businesses")
+    .upsert(
+      {
+        external_business_id: "configured_page_access",
+        business_name: "Configured Page Access",
+        status: "active",
+        sync_status: "healthy",
+        webhook_health: "unknown",
+        granted_scopes: [],
+        last_synced_at: startedAt
+      },
+      { onConflict: "external_business_id" }
+    )
+    .select("id,external_business_id,business_name")
+    .single();
+
+  if (result.error) throw result.error;
   return result.data as Row;
 }
 
@@ -1196,7 +1219,13 @@ async function syncScopedMetaData(options: SyncMetaDataOptions) {
 
   const meta = new MetaBusinessClient();
   const startedAt = new Date().toISOString();
-  const targetLabel = options.assetId ? `asset ${options.assetId}` : options.businessId ? `business ${options.businessId}` : "selected scope";
+  const targetLabel = options.assetId
+    ? `asset ${options.assetId}`
+    : options.businessId
+      ? `business ${options.businessId}`
+      : options.pageId
+        ? `page ${options.pageId}`
+        : "selected scope";
 
   const syncJob = await client
     .from("sync_jobs")
@@ -1218,18 +1247,57 @@ async function syncScopedMetaData(options: SyncMetaDataOptions) {
   const conversationSourceDiagnostics: ConversationSourceDiagnostic[] = [];
 
   try {
-    const businessRow = options.businessId
-      ? await getBusinessRow(client, options.businessId)
-      : await getBusinessRow(client, str((await getAssetRow(client, str(options.assetId))).business_id));
+    let businessRow: Row;
+    let scopePlan: Awaited<ReturnType<typeof resolvePagesForScopedSync>>;
+
+    if (options.pageId) {
+      const externalPageId = options.pageId;
+      const existingPageAsset = await client
+        .from("connected_assets")
+        .select("business_id")
+        .eq("asset_type", "facebook_page")
+        .eq("external_asset_id", externalPageId)
+        .maybeSingle();
+
+      if (existingPageAsset.error) throw existingPageAsset.error;
+
+      businessRow = existingPageAsset.data
+        ? await getBusinessRow(client, str((existingPageAsset.data as Row).business_id))
+        : await ensureConfiguredBusinessRow(client, startedAt);
+
+      const pageToken = getMetaMessagingPageToken(externalPageId);
+      if (!pageToken) {
+        throw new Error(`No configured messaging page token was found for page ${externalPageId}.`);
+      }
+
+      const page = await meta.withPageToken(pageToken).getPageDetails(externalPageId).catch(
+        () =>
+          ({
+            id: externalPageId,
+            name: `Configured Page ${externalPageId}`,
+            access_token: pageToken,
+            instagram_business_account: null
+          }) satisfies SyncablePage
+      );
+
+      scopePlan = {
+        pages: [page],
+        includeLeads: true
+      };
+    } else {
+      businessRow = options.businessId
+        ? await getBusinessRow(client, options.businessId)
+        : await getBusinessRow(client, str((await getAssetRow(client, str(options.assetId))).business_id));
+
+      scopePlan = await resolvePagesForScopedSync({
+        client,
+        meta,
+        businessRow,
+        assetId: options.assetId
+      });
+    }
 
     counts.businesses = 1;
-
-    const scopePlan = await resolvePagesForScopedSync({
-      client,
-      meta,
-      businessRow,
-      assetId: options.assetId
-    });
 
     for (const page of scopePlan.pages) {
       await syncPageData({
