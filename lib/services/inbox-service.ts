@@ -1,5 +1,25 @@
 import type { DashboardScope } from "@/lib/dashboard/scope";
 import { dashboardRepository } from "@/lib/repositories/dashboard-repository";
+import type { Message } from "@/types/domain";
+
+function buildPreviewFallbackMessage(conversationId: string, contactName: string, preview: string, sentAt: string): Message | null {
+  const body = preview.trim();
+  if (!body) {
+    return null;
+  }
+
+  return {
+    id: `preview-${conversationId}`,
+    conversationId,
+    direction: "inbound",
+    senderLabel: contactName || "Meta thread preview",
+    body,
+    status: "delivered",
+    sentAt,
+    archivedAt: sentAt,
+    attachments: []
+  };
+}
 
 export async function getInboxData(scope?: DashboardScope, conversationId?: string) {
   const [conversations, autoResponderRules] = await Promise.all([
@@ -18,10 +38,17 @@ export async function getInboxData(scope?: DashboardScope, conversationId?: stri
       ])
     : [[], []];
 
+  const displayThreadMessages =
+    selectedConversation && threadMessages.length === 0
+      ? [buildPreviewFallbackMessage(selectedConversation.id, selectedConversation.contactName, selectedConversation.preview, selectedConversation.lastMessageAt)].filter(
+          (item): item is Message => Boolean(item)
+        )
+      : threadMessages;
+
   return {
     conversations,
     selectedConversation,
-    threadMessages,
+    threadMessages: displayThreadMessages,
     notes,
     autoResponderRules
   };

@@ -7,5 +7,7 @@ coverage
 dist
 *.log
 supabase/.temp
+__pycache__/
+*.pyc
 
 tsconfig.tsbuildinfo

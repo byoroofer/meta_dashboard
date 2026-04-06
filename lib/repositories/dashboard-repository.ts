@@ -8,6 +8,8 @@ import type {
   AuditLog,
   AutoResponderRule,
   Campaign,
+  CommunicationArchiveAttachment,
+  CommunicationArchiveEvent,
   ConnectedAsset,
   ConnectedBusiness,
   CommandExecution,
@@ -36,6 +38,7 @@ const mockAds: Ad[] = [];
 const mockAuditLogs: AuditLog[] = [];
 const mockAutoResponderRules: AutoResponderRule[] = [];
 const mockCampaigns: Campaign[] = [];
+const mockCommunicationArchiveEvents: CommunicationArchiveEvent[] = [];
 const mockConnectedAssets: ConnectedAsset[] = [];
 const mockConnectedBusinesses: ConnectedBusiness[] = [];
 const mockCommandExecutions: CommandExecution[] = [];
@@ -55,6 +58,7 @@ const mockSyncJobs: SyncJob[] = [];
 
 export interface DashboardScopeOptions {
   businesses: Array<{ id: string; name: string }>;
+  assets: Array<{ id: string; name: string; type: ConnectedAsset["type"]; businessId: string }>;
   adAccounts: Array<{ id: string; name: string; businessIds?: string[]; businessNames?: string[] }>;
 }
 
@@ -91,7 +95,15 @@ async function userMap() {
 
 async function scopeAssetIds(scope?: DashboardScope) {
   const client = getSupabaseAdminClient();
-  if (!client || !scope?.businessId) return null;
+  if (!client) return null;
+  if (scope?.assetId) {
+    let query = client.from("connected_assets").select("id").eq("id", scope.assetId);
+    if (scope.businessId) query = query.eq("business_id", scope.businessId);
+    const assetResult = await query;
+    if (assetResult.error) throw assetResult.error;
+    return (assetResult.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
+  }
+  if (!scope?.businessId) return null;
   const result = await client.from("connected_assets").select("id").eq("business_id", scope.businessId);
   if (result.error) throw result.error;
   return (result.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
@@ -227,8 +239,75 @@ function mapArchive(row: Row): MessageArchiveRecord {
     snapshotHash: str(row.snapshot_sha256),
     canonicalVersion: num(row.canonical_version, 1),
     createdAt: iso(row.created_at),
-    retentionClass: str(row.retention_class, "standard") as MessageArchiveRecord["retentionClass"]
+    retentionClass: str(row.retention_class, "standard") as MessageArchiveRecord["retentionClass"],
+    canonicalPayload: obj(row.canonical_payload)
   };
+}
+
+function mapCommunicationArchiveAttachment(row: Row): CommunicationArchiveAttachment {
+  const metadata = obj(row.metadata);
+
+  return {
+    id: str(row.id),
+    archiveEventId: str(row.archive_event_id),
+    kind: str(row.attachment_type, "file"),
+    externalAttachmentId: nullable(row.external_attachment_id),
+    fileName: str(row.file_name, "attachment"),
+    mimeType: str(row.mime_type, "application/octet-stream"),
+    url: str(row.storage_path) || str(metadata.url) || str(metadata.fileUrl),
+    metadata
+  };
+}
+
+function mapCommunicationArchiveEvent(
+  row: Row,
+  attachmentCount: number,
+  attachments: CommunicationArchiveAttachment[],
+  contact: Contact | null
+): CommunicationArchiveEvent {
+  return {
+    id: str(row.id),
+    connectedBusinessId: nullable(row.connected_business_id),
+    connectedAssetId: nullable(row.connected_asset_id),
+    conversationId: nullable(row.conversation_id),
+    messageId: nullable(row.message_id),
+    contactId: nullable(row.contact_id),
+    sourcePlatform: str(row.source_platform, "unknown") as CommunicationArchiveEvent["sourcePlatform"],
+    channel: str(row.channel, "meta") as CommunicationArchiveEvent["channel"],
+    direction: row.direction ? (str(row.direction) as CommunicationArchiveEvent["direction"]) : null,
+    eventType: str(row.event_type, "event"),
+    externalEventId: nullable(row.external_event_id),
+    externalThreadId: nullable(row.external_thread_id),
+    externalMessageId: nullable(row.external_message_id),
+    actorExternalId: nullable(row.actor_external_id),
+    actorLabel: nullable(row.actor_label),
+    counterpartyExternalId: nullable(row.counterparty_external_id),
+    counterpartyLabel: nullable(row.counterparty_label) ?? contact?.displayName ?? null,
+    occurredAt: nullable(row.occurred_at),
+    archivedAt: iso(row.archived_at ?? row.created_at),
+    retentionLocked: Boolean(row.retention_locked),
+    payloadSha256: str(row.payload_sha256),
+    attachmentCount,
+    canonicalPayload: obj(row.canonical_payload),
+    rawPayload: obj(row.raw_payload),
+    attachments,
+    contact
+  };
+}
+
+function previewFromArchiveEvent(row: Row) {
+  const canonicalPayload = obj(row.canonical_payload);
+  const rawPayload = obj(row.raw_payload);
+  const canonicalConversation = obj(canonicalPayload.conversation);
+  const rawDetailConversation = obj(rawPayload.detailConversation);
+  const rawIndexConversation = obj(rawPayload.indexConversation);
+
+  return (
+    str(canonicalPayload.body) ||
+    str(canonicalConversation.snippet) ||
+    str(rawDetailConversation.snippet) ||
+    str(rawIndexConversation.snippet)
+  );
 }
 
 function mockByBusiness<T>(items: T[], predicate: (item: T, businessId: string) => boolean, scope?: DashboardScope) {
@@ -241,15 +320,24 @@ export const dashboardRepository = {
     liveOrFallback(
       async () => {
         const client = getSupabaseAdminClient()!;
-        const [businessesResult, accountsResult, links] = await Promise.all([
+        const [businessesResult, assetsResult, accountsResult, links] = await Promise.all([
           client.from("connected_businesses").select("id,business_name").order("business_name"),
+          client.from("connected_assets").select("id,business_id,asset_name,asset_type").order("asset_name"),
           client.from("ad_accounts").select("id,account_name").order("account_name"),
           adAccountLinks()
         ]);
-        if (businessesResult.error || accountsResult.error) throw businessesResult.error ?? accountsResult.error;
+        if (businessesResult.error || assetsResult.error || accountsResult.error) {
+          throw businessesResult.error ?? assetsResult.error ?? accountsResult.error;
+        }
         const businessNames = new Map((businessesResult.data ?? []).map((row) => [str((row as Row).id), str((row as Row).business_name)]));
         return {
           businesses: (businessesResult.data ?? []).map((row) => ({ id: str((row as Row).id), name: str((row as Row).business_name) })),
+          assets: (assetsResult.data ?? []).map((row) => ({
+            id: str((row as Row).id),
+            name: str((row as Row).asset_name),
+            type: str((row as Row).asset_type, "facebook_page") as ConnectedAsset["type"],
+            businessId: str((row as Row).business_id)
+          })),
           adAccounts: (accountsResult.data ?? []).map((row) => {
             const accountLinks = links.filter((link) => str(link.ad_account_id) === str((row as Row).id));
             const businessIds = Array.from(
@@ -274,6 +362,7 @@ export const dashboardRepository = {
       },
       () => ({
         businesses: mockConnectedBusinesses.map((business) => ({ id: business.id, name: business.name })),
+        assets: mockConnectedAssets.map((asset) => ({ id: asset.id, name: asset.name, type: asset.type, businessId: asset.businessId })),
         adAccounts: mockAdAccounts.map((account) => ({ id: account.id, name: account.name, businessIds: [], businessNames: [] }))
       })
     ),
@@ -302,12 +391,19 @@ export const dashboardRepository = {
         const client = getSupabaseAdminClient()!;
         let query = client.from("connected_assets").select("*").order("asset_name");
         if (scope?.businessId) query = query.eq("business_id", scope.businessId);
+        if (scope?.assetId) query = query.eq("id", scope.assetId);
         const result = await query;
         if (result.error) throw result.error;
         return (result.data ?? []).map((row) => mapAsset(row as Row));
       },
-      () => mockByBusiness(mockConnectedAssets, (asset, businessId) => asset.businessId === businessId, scope)
+      () =>
+        (scope?.assetId
+          ? mockConnectedAssets.filter((asset) => asset.id === scope.assetId)
+          : mockByBusiness(mockConnectedAssets, (asset, businessId) => asset.businessId === businessId, scope))
     ),
+
+  getConnectedAssetById: async (assetId: string, scope?: DashboardScope) =>
+    (await dashboardRepository.getConnectedAssets(scope)).find((item) => item.id === assetId) ?? null,
 
   getContacts: async (scope?: DashboardScope) =>
     liveOrFallback(
@@ -351,19 +447,60 @@ export const dashboardRepository = {
       async () => {
         const client = getSupabaseAdminClient()!;
         const [contacts, assets, owners] = await Promise.all([dashboardRepository.getContacts(scope), dashboardRepository.getConnectedAssets(scope), userMap()]);
-        const assetIds = scope?.businessId ? await scopeAssetIds(scope) : null;
+        const assetIds = scope?.businessId || scope?.assetId ? await scopeAssetIds(scope) : null;
         if (assetIds && !assetIds.length) return [];
         let query = client.from("conversations").select("*").order("last_message_at", { ascending: false, nullsFirst: false });
         if (assetIds) query = query.in("connected_asset_id", assetIds);
         const result = await query;
         if (result.error) throw result.error;
-        const tagIds = (result.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
-        const tagsResult = tagIds.length ? await client.from("message_tags").select("conversation_id,tag").in("conversation_id", tagIds) : { data: [], error: null };
-        if (tagsResult.error) throw tagsResult.error;
+        const conversationIds = (result.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
+        const [tagsResult, latestMessagesResult, archivePreviewResult] = await Promise.all([
+          conversationIds.length
+            ? client.from("message_tags").select("conversation_id,tag").in("conversation_id", conversationIds)
+            : Promise.resolve({ data: [], error: null }),
+          conversationIds.length
+            ? client
+                .from("messages")
+                .select("conversation_id,body,sent_at,created_at")
+                .in("conversation_id", conversationIds)
+                .order("sent_at", { ascending: false, nullsFirst: false })
+                .order("created_at", { ascending: false, nullsFirst: false })
+            : Promise.resolve({ data: [], error: null }),
+          conversationIds.length
+            ? client
+                .from("communication_archive_events")
+                .select("conversation_id,canonical_payload,raw_payload,occurred_at,archived_at")
+                .in("conversation_id", conversationIds)
+                .in("event_type", ["historical_message_imported", "historical_thread_snapshot"])
+                .order("occurred_at", { ascending: false, nullsFirst: false })
+                .order("archived_at", { ascending: false, nullsFirst: false })
+            : Promise.resolve({ data: [], error: null })
+        ]);
+        if (tagsResult.error || latestMessagesResult.error || archivePreviewResult.error) {
+          throw tagsResult.error ?? latestMessagesResult.error ?? archivePreviewResult.error;
+        }
         const tagMap = new Map<string, string[]>();
         for (const row of tagsResult.data ?? []) {
           const conversationId = str((row as Row).conversation_id);
           tagMap.set(conversationId, [...(tagMap.get(conversationId) ?? []), str((row as Row).tag)]);
+        }
+        const latestMessagePreviewMap = new Map<string, string>();
+        for (const row of latestMessagesResult.data ?? []) {
+          const conversationId = str((row as Row).conversation_id);
+          if (latestMessagePreviewMap.has(conversationId)) continue;
+          const preview = str((row as Row).body).trim();
+          if (preview) {
+            latestMessagePreviewMap.set(conversationId, preview);
+          }
+        }
+        const archivePreviewMap = new Map<string, string>();
+        for (const row of archivePreviewResult.data ?? []) {
+          const conversationId = str((row as Row).conversation_id);
+          if (archivePreviewMap.has(conversationId)) continue;
+          const preview = previewFromArchiveEvent(row as Row).trim();
+          if (preview) {
+            archivePreviewMap.set(conversationId, preview);
+          }
         }
         const contactMap = new Map(contacts.map((contact) => [contact.id, contact]));
         const assetMap = new Map(assets.map((asset) => [asset.id, asset]));
@@ -371,6 +508,11 @@ export const dashboardRepository = {
           const typed = row as Row;
           const contact = contactMap.get(str(typed.contact_id));
           const asset = assetMap.get(str(typed.connected_asset_id));
+          const subject = str(typed.subject, "Conversation");
+          const preview =
+            latestMessagePreviewMap.get(str(typed.id)) ??
+            archivePreviewMap.get(str(typed.id)) ??
+            subject;
           return {
             id: str(typed.id),
             platform: str(typed.platform, "facebook") as Conversation["platform"],
@@ -378,8 +520,8 @@ export const dashboardRepository = {
             assetId: str(typed.connected_asset_id),
             contactId: str(typed.contact_id),
             contactName: contact?.displayName ?? str(typed.external_thread_id, "Unknown contact"),
-            subject: str(typed.subject, "Conversation"),
-            preview: str(typed.subject, "Conversation"),
+            subject,
+            preview,
             unreadCount: num(typed.unread_count),
             status: str(typed.status, "open") as Conversation["status"],
             assignedTo: owners.get(str(typed.assigned_user_id)) ?? "Unassigned",
@@ -388,10 +530,16 @@ export const dashboardRepository = {
           };
         });
       },
-      () => mockByBusiness(mockConversations, (conversation, businessId) => conversation.businessId === businessId, scope)
+      () =>
+        (scope?.assetId
+          ? mockConversations.filter((conversation) => conversation.assetId === scope.assetId)
+          : mockByBusiness(mockConversations, (conversation, businessId) => conversation.businessId === businessId, scope))
     ),
 
   getConversationById: async (conversationId: string, scope?: DashboardScope) => (await dashboardRepository.getConversations(scope)).find((item) => item.id === conversationId) ?? null,
+
+  getConversationsByAssetId: async (assetId: string, scope?: DashboardScope) =>
+    (await dashboardRepository.getConversations(scope)).filter((item) => item.assetId === assetId),
 
   getMessagesByConversationId: async (conversationId: string) =>
     liveOrFallback(
@@ -433,6 +581,26 @@ export const dashboardRepository = {
         });
       },
       () => mockMessages.filter((item) => item.conversationId === conversationId)
+    ),
+
+  getMessages: async (scope?: DashboardScope) =>
+    liveOrFallback(
+      async () => {
+        const conversations = await dashboardRepository.getConversations(scope);
+        if (!conversations.length && scope?.businessId) return [];
+
+        const messageGroups = await Promise.all(conversations.map((conversation) => dashboardRepository.getMessagesByConversationId(conversation.id)));
+        return messageGroups.flat().sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime());
+      },
+      () =>
+        mockByBusiness(
+          mockMessages,
+          (message, businessId) => {
+            const conversation = mockConversations.find((item) => item.id === message.conversationId);
+            return conversation?.businessId === businessId;
+          },
+          scope
+        ).sort((a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime())
     ),
 
   getConversationNotes: async (conversationId: string) =>
@@ -537,6 +705,78 @@ export const dashboardRepository = {
         )
     ),
 
+  getCommunicationArchiveEvents: async (scope?: DashboardScope) =>
+    liveOrFallback(
+      async () => {
+        const client = getSupabaseAdminClient()!;
+        let assetIds: string[] | null = null;
+        if (scope?.businessId) {
+          assetIds = await scopeAssetIds(scope);
+          if (!assetIds?.length) return [];
+        }
+
+        let query = client
+          .from("communication_archive_events")
+          .select("*")
+          .order("archived_at", { ascending: false })
+          .limit(250);
+
+        if (assetIds) {
+          query = query.in("connected_asset_id", assetIds);
+        }
+
+        const result = await query;
+        if (result.error) throw result.error;
+
+        const eventIds = (result.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
+        const attachmentsResult = eventIds.length
+          ? await client.from("communication_archive_attachments").select("*").in("archive_event_id", eventIds)
+          : { data: [], error: null };
+
+        if (attachmentsResult.error) throw attachmentsResult.error;
+
+        const attachmentCountByEvent = new Map<string, number>();
+        const attachmentMap = new Map<string, CommunicationArchiveAttachment[]>();
+        for (const row of attachmentsResult.data ?? []) {
+          const attachment = mapCommunicationArchiveAttachment(row as Row);
+          const archiveEventId = attachment.archiveEventId;
+          attachmentCountByEvent.set(archiveEventId, (attachmentCountByEvent.get(archiveEventId) ?? 0) + 1);
+          attachmentMap.set(archiveEventId, [...(attachmentMap.get(archiveEventId) ?? []), attachment]);
+        }
+
+        const contactIds = Array.from(
+          new Set((result.data ?? []).map((row) => str((row as Row).contact_id)).filter(Boolean))
+        );
+        const owners = contactIds.length ? await userMap() : new Map<string, string>();
+        const contactsResult = contactIds.length
+          ? await client.from("contacts").select("*").in("id", contactIds)
+          : { data: [], error: null };
+
+        if (contactsResult.error) throw contactsResult.error;
+
+        const contactMap = new Map<string, Contact>();
+        for (const row of contactsResult.data ?? []) {
+          const typed = row as Row;
+          contactMap.set(str(typed.id), mapContact(typed, owners.get(str(typed.owner_user_id)) ?? "Unassigned"));
+        }
+
+        return (result.data ?? []).map((row) =>
+          mapCommunicationArchiveEvent(
+            row as Row,
+            attachmentCountByEvent.get(str((row as Row).id)) ?? 0,
+            attachmentMap.get(str((row as Row).id)) ?? [],
+            contactMap.get(str((row as Row).contact_id)) ?? null
+          )
+        );
+      },
+      () =>
+        mockByBusiness(
+          mockCommunicationArchiveEvents,
+          () => true,
+          scope
+        )
+    ),
+
   getLeads: async (scope?: DashboardScope) =>
     liveOrFallback(
       async () => {
@@ -551,15 +791,48 @@ export const dashboardRepository = {
         return (result.data ?? []).map((row) => mapLead(row as Row, owners.get(str((row as Row).owner_user_id)) ?? "Unassigned"));
       },
       () =>
-        mockByBusiness(
-          mockLeads,
-          (lead, businessId) => {
-            const form = mockLeadForms.find((item) => item.id === lead.formId);
-            const asset = form ? mockConnectedAssets.find((item) => item.id === form.assetId) : null;
-            return asset?.businessId === businessId;
-          },
-          scope
-        )
+        (scope?.assetId
+          ? mockLeads.filter((lead) => {
+              const form = mockLeadForms.find((item) => item.id === lead.formId);
+              return form?.assetId === scope.assetId;
+            })
+          : mockByBusiness(
+              mockLeads,
+              (lead, businessId) => {
+                const form = mockLeadForms.find((item) => item.id === lead.formId);
+                const asset = form ? mockConnectedAssets.find((item) => item.id === form.assetId) : null;
+                return asset?.businessId === businessId;
+              },
+              scope
+            ))
+    ),
+
+  getLeadsByAssetId: async (assetId: string, scope?: DashboardScope) =>
+    liveOrFallback(
+      async () => {
+        const asset = await dashboardRepository.getConnectedAssetById(assetId, scope);
+        if (!asset) return [];
+
+        const client = getSupabaseAdminClient()!;
+        const owners = await userMap();
+        const formsResult = await client.from("lead_forms").select("id").eq("connected_asset_id", assetId);
+        if (formsResult.error) throw formsResult.error;
+
+        const leadFormIds = (formsResult.data ?? []).map((row) => str((row as Row).id)).filter(Boolean);
+        if (!leadFormIds.length) return [];
+
+        const leadsResult = await client.from("leads").select("*").in("lead_form_id", leadFormIds).order("created_at", { ascending: false });
+        if (leadsResult.error) throw leadsResult.error;
+
+        return (leadsResult.data ?? []).map((row) => mapLead(row as Row, owners.get(str((row as Row).owner_user_id)) ?? "Unassigned"));
+      },
+      () =>
+        mockLeads.filter((lead) => {
+          const form = mockLeadForms.find((item) => item.id === lead.formId);
+          const asset = form ? mockConnectedAssets.find((item) => item.id === form.assetId) : null;
+          if (!asset || asset.id !== assetId) return false;
+          return !scope?.businessId || asset.businessId === scope.businessId;
+        })
     ),
 
   getLeadById: async (leadId: string, scope?: DashboardScope) => (await dashboardRepository.getLeads(scope)).find((item) => item.id === leadId) ?? null,

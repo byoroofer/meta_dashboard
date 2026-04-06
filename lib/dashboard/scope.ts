@@ -1,5 +1,6 @@
 export interface DashboardScope {
   businessId?: string;
+  assetId?: string;
   adAccountId?: string;
 }
 
@@ -31,6 +32,7 @@ export async function resolveDashboardScope(input?: SearchParamsShape): Promise<
   if (input instanceof URLSearchParams) {
     return {
       businessId: cleanValue(input.get("businessId")),
+      assetId: cleanValue(input.get("assetId")),
       adAccountId: cleanValue(input.get("adAccountId"))
     };
   }
@@ -39,6 +41,7 @@ export async function resolveDashboardScope(input?: SearchParamsShape): Promise<
 
   return {
     businessId: cleanValue(firstValue(resolved.businessId)),
+    assetId: cleanValue(firstValue(resolved.assetId)),
     adAccountId: cleanValue(firstValue(resolved.adAccountId))
   };
 }
@@ -48,6 +51,10 @@ export function scopeToQueryString(scope?: DashboardScope) {
 
   if (scope?.businessId) {
     params.set("businessId", scope.businessId);
+  }
+
+  if (scope?.assetId) {
+    params.set("assetId", scope.assetId);
   }
 
   if (scope?.adAccountId) {

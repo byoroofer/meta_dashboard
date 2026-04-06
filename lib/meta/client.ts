@@ -6,6 +6,15 @@ interface MetaPagingResponse<T> {
   error?: { message?: string };
 }
 
+export interface MetaPagedCollection<T> {
+  data: T[];
+  pageCount: number;
+  rowCount: number;
+  firstPageRowCount: number;
+  hadPaging: boolean;
+  lastNextUrl: string | null;
+}
+
 interface MetaBusinessNode {
   id: string;
   name?: string;
@@ -17,6 +26,13 @@ interface MetaPageNode {
   access_token?: string;
   instagram_business_account?: { id: string; username?: string; name?: string } | null;
   tasks?: string[];
+}
+
+interface MetaParticipantNode {
+  id: string;
+  name?: string;
+  email?: string;
+  username?: string;
 }
 
 interface MetaAdAccountNode {
@@ -78,6 +94,46 @@ interface MetaInsightNode {
   actions?: Array<{ action_type?: string; value?: string }>;
 }
 
+interface MetaConversationNode {
+  id: string;
+  updated_time?: string;
+  snippet?: string;
+  message_count?: number;
+  can_reply?: boolean;
+  link?: string;
+  unread_count?: number;
+  senders?: { data?: MetaParticipantNode[] };
+  participants?: { data?: MetaParticipantNode[] };
+}
+
+interface MetaParticipantProfileNode {
+  id: string;
+  name?: string;
+  username?: string;
+  profile_pic?: string;
+}
+
+interface MetaConversationMessageAttachmentNode {
+  id?: string;
+  mime_type?: string;
+  file_url?: string;
+  image_data?: Record<string, unknown>;
+  video_data?: Record<string, unknown>;
+  fallback?: string;
+  name?: string;
+}
+
+interface MetaConversationMessageNode {
+  id: string;
+  created_time?: string;
+  message?: string;
+  from?: MetaParticipantNode | null;
+  to?: { data?: MetaParticipantNode[] };
+  attachments?: { data?: MetaConversationMessageAttachmentNode[] };
+  shares?: Record<string, unknown> | null;
+  sticker?: Record<string, unknown> | null;
+ }
+
 export class MetaBusinessClient {
   private readonly accessToken: string;
   private readonly baseUrl: string;
@@ -130,16 +186,41 @@ export class MetaBusinessClient {
   }
 
   private async fetchAllPages<T>(path: string, params?: Record<string, string>) {
+    const payload = await this.fetchAllPagesWithMetadata<T>(path, params);
+    return payload.data;
+  }
+
+  private async fetchAllPagesWithMetadata<T>(path: string, params?: Record<string, string>): Promise<MetaPagedCollection<T>> {
     let next: string | null = this.buildUrl(path, params);
     const rows: T[] = [];
+    let pageCount = 0;
+    let firstPageRowCount = 0;
+    let hadPaging = false;
+    let lastNextUrl: string | null = null;
 
     while (next) {
       const payload: MetaPagingResponse<T> = await this.fetchJson<MetaPagingResponse<T>>(next);
-      rows.push(...(payload.data ?? []));
-      next = payload.paging?.next ?? null;
+      const pageRows = payload.data ?? [];
+      pageCount += 1;
+      if (pageCount === 1) {
+        firstPageRowCount = pageRows.length;
+      }
+      rows.push(...pageRows);
+      lastNextUrl = payload.paging?.next ?? null;
+      if (lastNextUrl) {
+        hadPaging = true;
+      }
+      next = lastNextUrl;
     }
 
-    return rows;
+    return {
+      data: rows,
+      pageCount,
+      rowCount: rows.length,
+      firstPageRowCount,
+      hadPaging,
+      lastNextUrl
+    };
   }
 
   async getConnectedBusinesses() {
@@ -151,6 +232,12 @@ export class MetaBusinessClient {
   /** Fallback: pages the system user can directly access (bypasses /me/businesses hierarchy) */
   async getDirectPages() {
     return this.fetchAllPages<MetaPageNode>("/me/accounts", {
+      fields: "id,name,access_token,instagram_business_account{id,username,name}"
+    });
+  }
+
+  async getPageDetails(pageId: string) {
+    return this.fetchJson<MetaPageNode>(`/${pageId}`, {
       fields: "id,name,access_token,instagram_business_account{id,username,name}"
     });
   }
@@ -188,6 +275,39 @@ export class MetaBusinessClient {
   async getLeads(formId: string) {
     return this.fetchAllPages<MetaLeadNode>(`/${formId}/leads`, {
       fields: "id,created_time,field_data,campaign_name,adset_name,ad_name"
+    });
+  }
+
+  async getConversations(pageId: string, platform?: "facebook" | "instagram") {
+    return (await this.getConversationsWithDiagnostics(pageId, platform)).data;
+  }
+
+  async getConversationsWithDiagnostics(pageId: string, platform?: "facebook" | "instagram") {
+    return this.fetchAllPagesWithMetadata<MetaConversationNode>(`/${pageId}/conversations`, {
+      fields: "id,updated_time,snippet,message_count,senders,participants",
+      ...(platform === "instagram" ? { platform: "instagram" } : {}),
+      limit: "200"
+    });
+  }
+
+  async getConversationDetails(conversationId: string, platform?: "facebook" | "instagram") {
+    return this.fetchJson<MetaConversationNode>(`/${conversationId}`, {
+      fields: "id,updated_time,snippet,message_count,can_reply,link,unread_count,senders,participants",
+      ...(platform === "instagram" ? { platform: "instagram" } : {})
+    });
+  }
+
+  async getParticipantProfile(participantId: string) {
+    return this.fetchJson<MetaParticipantProfileNode>(`/${participantId}`, {
+      fields: "id,name,username,profile_pic"
+    });
+  }
+
+  async getConversationMessages(conversationId: string, platform?: "facebook" | "instagram") {
+    return this.fetchAllPages<MetaConversationMessageNode>(`/${conversationId}/messages`, {
+      fields: "id,created_time,message,from,to,attachments{id,mime_type,file_url,name}",
+      ...(platform === "instagram" ? { platform: "instagram" } : {}),
+      limit: platform === "instagram" ? "25" : "100"
     });
   }
 

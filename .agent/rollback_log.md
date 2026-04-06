@@ -2,6 +2,29 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T12:18:15.2918088-05:00 | Production scoped sync retry for Elite Cleaning and Brooke Vinson
+
+- Change summary: Re-ran live scoped Meta sync attempts for the Brooke Vinson Instagram asset and Elite Cleaning Page asset, verified the resulting production audit/state, and confirmed that at least one scoped sync completed successfully on the server even though both client requests ended with `ECONNRESET`.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: production Node HTTPS requests against login, connected-accounts, meta-status, inbox, scoped import, and audit endpoints on `https://tjware.me/meta-dashboard`
+- Reversal steps:
+  1. No code rollback is required.
+  2. If the production sync attempts need to be conceptually backed out, record the later corrective sync or deploy in this log rather than trying to undo the imported rows manually.
+  3. Append a correction here if any part of the observed production counts or timestamps is inaccurate.
+- Notes: Post-sync state remained `All inbox: 50`, `Elite Cleaning: 48`, `Brooke Vinson: 2`, and connected assets remained `3`, so the importer appears to have plateaued on currently accessible data.
+
+## 2026-04-06T12:07:44.9811072-05:00 | Inbox preview enrichment and fallback thread body display
+
+- Change summary: Updated inbox conversation previews to use the latest imported message body or preserved archive snippet, added a display-only fallback message when a selected thread has zero imported messages, and redeployed production.
+- Files changed: `lib/repositories/dashboard-repository.ts`, `lib/services/inbox-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `cmd /c npm run lint`; `cmd /c npm run build`; `cmd /c npm run typecheck`; `cmd /c npx vercel deploy --prod --yes`; production Node HTTPS checks against Brooke Vinson inbox list and thread APIs
+- Reversal steps:
+  1. Remove the latest-message/archive-snippet preview logic from `lib/repositories/dashboard-repository.ts`.
+  2. Remove the synthetic fallback message injection from `lib/services/inbox-service.ts`.
+  3. Redeploy production.
+  4. Revert the `.agent/` memory-file updates if this log entry is incorrect.
+- Notes: This improves inbox rendering for zero-message threads but does not fix upstream missing Meta message rows.
+
 ## 2026-04-06T12:02:22.4926547-05:00 | Commit marketplace-deals branch and deploy production from clean temp clone
 
 - Change summary: Created branch `codex/marketplace-deals`, committed the marketplace-deals feature as `ff6cba6` (`Add marketplace deals workflow`), then deployed that committed branch to Vercel production from a clean temporary clone so unrelated dirty files in the active worktree were not included.

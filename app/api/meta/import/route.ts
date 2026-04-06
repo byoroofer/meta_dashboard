@@ -3,11 +3,26 @@ import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/auth/session";
 import { syncMetaData } from "@/lib/meta/sync-service";
 
-export async function POST() {
+function cleanValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+export async function POST(request: Request) {
   await requireAdminSession();
 
   try {
-    const result = await syncMetaData();
+    let payload: Record<string, unknown> = {};
+
+    try {
+      payload = (await request.json()) as Record<string, unknown>;
+    } catch {
+      payload = {};
+    }
+
+    const result = await syncMetaData({
+      businessId: cleanValue(payload.businessId),
+      assetId: cleanValue(payload.assetId)
+    });
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     return NextResponse.json(

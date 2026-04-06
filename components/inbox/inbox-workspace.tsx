@@ -2,6 +2,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { Bot, MessageCircleMore, MessageSquare, MessageSquareReply, Paperclip, UserPlus } from "lucide-react";
 
+import { MetaSyncButton } from "@/components/meta/meta-sync-button";
 import { ReplyComposer } from "@/components/inbox/reply-composer";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterBar } from "@/components/shared/filter-bar";
@@ -38,7 +39,8 @@ export function InboxWorkspace({
         title="Inbox"
         description="Shared Facebook Page and Instagram professional inbox with assignment, automation, and archive visibility in one Business Center-style workspace."
         actions={
-          <>
+          <div className="flex flex-wrap items-center gap-3">
+            <MetaSyncButton />
             <Button variant="secondary" className="bg-slate-50">
               <Bot className="mr-2 h-4 w-4 text-[var(--accent)]" />
               Auto responders
@@ -47,7 +49,7 @@ export function InboxWorkspace({
               <UserPlus className="mr-2 h-4 w-4" />
               Assign rules
             </Button>
-          </>
+          </div>
         }
       />
 
@@ -120,7 +122,7 @@ export function InboxWorkspace({
               <EmptyState
                 icon={MessageSquare}
                 title="No conversations yet"
-                description="New Page and Instagram threads will appear here once live messaging data is synced."
+                description="Use Sync Meta data to import current Facebook Page and Instagram inbox history into the dashboard."
               />
             )}
           </CardContent>

@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, LoaderCircle, RefreshCw, TriangleAlert, XCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,12 @@ interface MetaStatus {
     counts: Record<string, number> | null;
   } | null;
   verdict: "ready" | "no_businesses" | "missing_config" | "never_run";
+}
+
+interface MetaImportResponse {
+  success?: boolean;
+  error?: string;
+  data?: { counts?: Record<string, number> };
 }
 
 function VerdictBadge({ verdict }: { verdict: MetaStatus["verdict"] }) {
@@ -69,6 +75,7 @@ function ConfigRow({ label, ok }: { label: string; ok: boolean }) {
 
 export function MetaSyncButton() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<MetaStatus | null>(null);
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,25 +105,52 @@ export function MetaSyncButton() {
     setIsSubmitting(true);
     setImportMessage(null);
 
+    const assetId = searchParams.get("assetId") ?? "";
+    const businessId = searchParams.get("businessId") ?? "";
+    const adAccountId = searchParams.get("adAccountId") ?? "";
+    const scopedPayload = assetId
+      ? { assetId }
+      : businessId && !adAccountId
+        ? { businessId }
+        : businessId
+          ? { businessId }
+          : undefined;
+
     try {
       const res = await fetch(withBasePath("/api/meta/import"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scopedPayload ?? {})
       });
 
-      const payload = (await res.json()) as {
-        success?: boolean;
-        error?: string;
-        data?: { counts?: Record<string, number> };
-      };
+      const rawText = await res.text();
+      let payload: MetaImportResponse | undefined;
 
-      if (!res.ok || !payload.success) {
-        throw new Error(payload.error ?? "Meta import failed.");
+      try {
+        payload = rawText ? (JSON.parse(rawText) as MetaImportResponse) : undefined;
+      } catch {
+        payload = undefined;
+      }
+
+      if (!res.ok || !payload?.success) {
+        const responseText = rawText.replace(/\s+/g, " ").trim();
+        throw new Error(
+          payload?.error ??
+            (responseText && !responseText.startsWith("<")
+              ? responseText.slice(0, 240)
+              : `Meta import failed with HTTP ${res.status}.`)
+        );
       }
 
       const c = payload.data?.counts ?? {};
-      const summary = `${c.businesses ?? 0} businesses, ${c.adAccounts ?? 0} ad accounts, ${c.leads ?? 0} leads`;
-      setImportMessage({ ok: true, text: `Import complete — ${summary}` });
+      const summary = [
+        `${c.businesses ?? 0} businesses`,
+        `${c.conversations ?? 0} conversations`,
+        `${c.messages ?? 0} messages`,
+        `${c.adAccounts ?? 0} ad accounts`,
+        `${c.leads ?? 0} leads`
+      ].join(", ");
+      setImportMessage({ ok: true, text: `${scopedPayload ? "Scoped import complete" : "Import complete"} - ${summary}` });
       startTransition(() => router.refresh());
       await fetchStatus();
     } catch (error) {
@@ -143,7 +177,11 @@ export function MetaSyncButton() {
           ) : (
             <RefreshCw className="mr-2 h-4 w-4 text-[var(--accent)]" />
           )}
-          Sync Meta data
+          {searchParams.get("assetId")
+            ? "Sync selected asset"
+            : searchParams.get("businessId")
+              ? "Sync selected business"
+              : "Sync Meta data"}
         </Button>
         {status && !isLoadingStatus && <VerdictBadge verdict={status.verdict} />}
       </div>
@@ -154,7 +192,6 @@ export function MetaSyncButton() {
         </p>
       )}
 
-      {/* Config diagnostic panel */}
       {status && !isLoadingStatus && (
         <div className="rounded-xl border border-[var(--border)] bg-slate-50 p-3.5 text-xs">
           <p className="mb-2.5 font-semibold uppercase tracking-[0.14em] text-slate-500">Integration health</p>
@@ -190,7 +227,15 @@ export function MetaSyncButton() {
               <p className="font-semibold uppercase tracking-[0.14em] text-slate-500">Last sync</p>
               <p className="mt-1 text-[var(--muted)]">
                 {status.lastSync.status.toUpperCase()} ·{" "}
-                {new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(status.lastSync.startedAt))}
+                {new Intl.DateTimeFormat("en-US", {
+                  timeZone: "America/Chicago",
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true
+                }).format(new Date(status.lastSync.startedAt))}
               </p>
               <p className="mt-0.5 text-[var(--muted)]">{status.lastSync.detail}</p>
             </div>

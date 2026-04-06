@@ -17,8 +17,10 @@ function isPublicPath(pathname: string) {
   return (
     pathname === "/login" ||
     pathname === "/privacy" ||
+    pathname === "/data-deletion-status" ||
     pathname === "/api/auth/login" ||
     pathname === "/api/auth/logout" ||
+    pathname === "/api/meta/data-deletion" ||
     pathname === "/api/meta/webhooks" ||
     pathname.startsWith("/api/tracking/")
   );

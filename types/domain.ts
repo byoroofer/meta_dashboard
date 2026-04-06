@@ -34,6 +34,28 @@ export interface ConnectedAsset {
   lastSyncedAt: string;
 }
 
+export interface ConnectedAssetMessageLog {
+  conversation: Conversation;
+  messages: Message[];
+}
+
+export interface ConnectedAssetLeadLog {
+  lead: Lead;
+  activities: LeadActivity[];
+}
+
+export interface ConnectedAssetLogs {
+  asset: ConnectedAsset;
+  messageLogs: ConnectedAssetMessageLog[];
+  leadLogs: ConnectedAssetLeadLog[];
+  totals: {
+    conversations: number;
+    messages: number;
+    leads: number;
+    leadActivities: number;
+  };
+}
+
 export interface Contact {
   id: string;
   displayName: string;
@@ -372,6 +394,47 @@ export interface MessageArchiveRecord {
   canonicalVersion: number;
   createdAt: string;
   retentionClass: "operational" | "legal_hold" | "standard";
+  canonicalPayload?: Record<string, unknown>;
+}
+
+export interface CommunicationArchiveAttachment {
+  id: string;
+  archiveEventId: string;
+  kind: "image" | "video" | "audio" | "file" | string;
+  externalAttachmentId?: string | null;
+  fileName: string;
+  mimeType: string;
+  url: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface CommunicationArchiveEvent {
+  id: string;
+  connectedBusinessId?: string | null;
+  connectedAssetId?: string | null;
+  conversationId?: string | null;
+  messageId?: string | null;
+  contactId?: string | null;
+  sourcePlatform: "facebook" | "instagram" | "messenger" | "meta" | "unknown";
+  channel: "facebook" | "instagram" | "messenger" | "meta";
+  direction: "inbound" | "outbound" | null;
+  eventType: string;
+  externalEventId?: string | null;
+  externalThreadId?: string | null;
+  externalMessageId?: string | null;
+  actorExternalId?: string | null;
+  actorLabel?: string | null;
+  counterpartyExternalId?: string | null;
+  counterpartyLabel?: string | null;
+  occurredAt?: string | null;
+  archivedAt: string;
+  retentionLocked: boolean;
+  payloadSha256: string;
+  attachmentCount: number;
+  canonicalPayload?: Record<string, unknown>;
+  rawPayload?: Record<string, unknown>;
+  attachments?: CommunicationArchiveAttachment[];
+  contact?: Contact | null;
 }
 
 export interface LeadForm {

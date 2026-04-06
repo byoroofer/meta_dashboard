@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 
+import { archiveCommunicationEvent } from "@/lib/archive/communication-archive";
 import { buildCanonicalArchiveSnapshot } from "@/lib/archive/canonical";
 import { getSupabaseAdminClient } from "@/lib/db/supabase/admin";
 import type { BuiltRawEventRecord } from "@/lib/meta/webhooks";
@@ -24,6 +25,14 @@ interface NormalizedMessageEvent {
   sentAt: string;
   attachments: NormalizedAttachment[];
   rawMessage: Record<string, unknown>;
+}
+
+function webhookArchiveEventType(rawEvent: BuiltRawEventRecord) {
+  if (rawEvent.platform === "leadgen") return "leadgen_webhook";
+  if (rawEvent.eventType === "read") return "message_read";
+  if (rawEvent.eventType === "delivery") return "message_delivery";
+  if (rawEvent.eventType === "messages") return "message_webhook";
+  return rawEvent.eventType || "webhook_event";
 }
 
 function normalizeMessagePayload(rawEvent: BuiltRawEventRecord) {
@@ -223,7 +232,8 @@ async function resolveOrCreateConversation(
 async function insertMessageCopy(
   client: ReturnType<typeof getSupabaseAdminClient>,
   conversationId: string,
-  normalized: NormalizedMessageEvent
+  normalized: NormalizedMessageEvent,
+  context?: { rawWebhookEventId?: string | null; connectedAssetId?: string | null; contactId?: string | null }
 ) {
   if (!client) {
     return null;
@@ -296,6 +306,36 @@ async function insertMessageCopy(
     throw archiveError;
   }
 
+  await archiveCommunicationEvent({
+    rawWebhookEventId: context?.rawWebhookEventId ?? null,
+    connectedAssetId: context?.connectedAssetId ?? null,
+    conversationId,
+    messageId: data.id,
+    contactId: context?.contactId ?? null,
+    sourcePlatform: normalized.platform,
+    channel: normalized.platform,
+    direction: normalized.direction,
+    eventType: normalized.direction === "inbound" ? "message_received" : "message_sent",
+    externalEventId: normalized.externalMessageId,
+    externalThreadId: normalized.externalThreadId,
+    externalMessageId: normalized.externalMessageId,
+    actorExternalId: normalized.direction === "inbound" ? normalized.participantExternalId : normalized.assetExternalId,
+    actorLabel: normalized.senderLabel,
+    counterpartyExternalId: normalized.direction === "inbound" ? normalized.assetExternalId : normalized.participantExternalId,
+    counterpartyLabel: normalized.direction === "inbound" ? normalized.assetExternalId : normalized.participantExternalId,
+    occurredAt: normalized.sentAt,
+    canonicalPayload: archive.canonicalPayload as Record<string, unknown>,
+    rawPayload: normalized.rawMessage,
+    attachments: normalized.attachments.map((attachment) => ({
+      attachmentType: attachment.attachmentType,
+      externalAttachmentId: attachment.externalAttachmentId,
+      fileName: attachment.fileName,
+      mimeType: attachment.mimeType,
+      storagePath: null,
+      metadata: attachment.metadata
+    }))
+  });
+
   return data;
 }
 
@@ -362,6 +402,17 @@ export async function persistInboundWebhookEvent(input: {
     throw rawEventError;
   }
 
+  await archiveCommunicationEvent({
+    rawWebhookEventId: rawEventRow.id,
+    sourcePlatform: input.rawEvent.platform === "leadgen" ? "meta" : input.rawEvent.platform,
+    channel: input.rawEvent.platform === "instagram" ? "instagram" : input.rawEvent.platform === "facebook" ? "facebook" : "meta",
+    eventType: webhookArchiveEventType(input.rawEvent),
+    externalEventId: input.rawEvent.deliveryId,
+    occurredAt: receivedAt,
+    canonicalPayload: input.rawEvent.archive.canonicalPayload as Record<string, unknown>,
+    rawPayload: input.rawEvent.payload
+  });
+
   if (!input.signatureValid) {
     await insertAuditLog(client, {
       action: "webhook.signature_failed",
@@ -408,7 +459,11 @@ export async function persistInboundWebhookEvent(input: {
       continue;
     }
 
-    const insertedMessage = await insertMessageCopy(client, conversation.id, normalized);
+    const insertedMessage = await insertMessageCopy(client, conversation.id, normalized, {
+      rawWebhookEventId: rawEventRow.id,
+      connectedAssetId: asset.id,
+      contactId: contact?.id ?? null
+    });
 
     if (insertedMessage) {
       messagesCopied += 1;
@@ -518,6 +573,27 @@ export async function persistOutboundMessageCopy(input: {
   if (archiveError) {
     throw archiveError;
   }
+
+  await archiveCommunicationEvent({
+    conversationId: conversation.id,
+    messageId: messageRow.id,
+    sourcePlatform: "meta",
+    channel: "meta",
+    direction: "outbound",
+    eventType: "outbound_message_queued",
+    externalEventId: externalMessageId,
+    externalMessageId,
+    actorLabel: input.actorLabel,
+    occurredAt: queuedAt,
+    canonicalPayload: archive.canonicalPayload as Record<string, unknown>,
+    rawPayload: {
+      direction: "outbound",
+      senderLabel: input.actorLabel,
+      body: input.body,
+      queuedAt,
+      externalMessageId
+    }
+  });
 
   await insertAuditLog(client, {
     action: "message.copy_outbound",

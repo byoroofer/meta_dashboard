@@ -2,6 +2,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { CircleDollarSign, Globe, Route as RouteIcon, UserRound, UserRoundSearch } from "lucide-react";
 
+import { MetaSyncButton } from "@/components/meta/meta-sync-button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { FilterBar } from "@/components/shared/filter-bar";
 import { PageHeader } from "@/components/shared/page-header";
@@ -37,6 +38,7 @@ export function LeadsWorkspace({
         eyebrow="Lead operations"
         title="Leads"
         description="Meta-originated lead records can be normalized, qualified, and delivered into website intake paths without losing attribution or raw event traceability."
+        actions={<MetaSyncButton />}
       />
       <FilterBar searchPlaceholder="Search leads, campaigns, owners, or websites" filters={["New", "Qualified", "Owned", "Delivered"]} />
       <section className="grid gap-4 xl:grid-cols-[1fr_0.95fr]">

@@ -2,6 +2,54 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-06T12:18:15.2918088-05:00 | Continue live production sync attempts for Elite Cleaning and Brooke Vinson
+
+- Task: Keep pushing the production importer forward by checking current live connected-account state, re-running scoped imports for the Elite Cleaning Page and Brooke Vinson Instagram asset, and verifying whether inbox counts or connected assets changed.
+- Context: The user asked to continue trying to sync and import data. Production already had a stale full import stuck in `running` state, TJ Ware for Congress was still not materialized as a connected asset, and the known safe operator path was asset-scoped sync.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: Node HTTPS requests against `https://tjware.me/meta-dashboard/api/auth/login`, `/api/connected-accounts`, `/api/meta/status`, `/api/inbox/conversations`, `/api/meta/import`, and `/api/audit`; `Get-Date -Format o`
+- Errors encountered:
+  1. Both fresh scoped sync POSTs ended with client-side `ECONNRESET` after the server had already started work.
+  2. The production `lastSync` status remains stuck on an earlier full import as `running`, so `/api/meta/status` is not a reliable source for the newest scoped sync counts.
+- Fix or decision:
+  1. Verified current live state before the new attempts:
+     - `All inbox`: `50`
+     - `Elite Cleaning`: `48`
+     - `Brooke Vinson`: `2`
+  2. Fired fresh scoped syncs for:
+     - Brooke Vinson IG asset `446290ba-f47b-430c-b475-b3af54b58049`
+     - Elite Cleaning Page asset `b0eb466b-1a3e-4324-acd2-68814a67db56`
+  3. Confirmed at least one of those requests completed successfully on the server side via a new production audit row:
+     - `2026-04-06T17:17:06.874371+00:00`
+     - `meta.import_scoped`
+     - `success`
+  4. Confirmed the post-sync live state did not materially change:
+     - `All inbox` stayed `50`
+     - `Elite Cleaning` stayed `48`
+     - `Brooke Vinson` stayed `2`
+     - connected assets still stayed at `3`, so TJ Ware for Congress still is not imported into connected assets
+- Rationale: This separated client transport resets from actual server behavior and confirmed the production importer is currently plateaued on the available data rather than simply failing to run.
+- Rollback plan: No code rollback required. If this log entry is inaccurate, append a correction with the exact production timestamps and counts.
+- Next steps: The next productive move is not another blind sync. It is to inspect live `sync_jobs.metadata.conversationSourceDiagnostics` and/or split the full configured-page import path further so TJ Ware for Congress can be materialized without relying on the stale full-import request path.
+
+## 2026-04-06T12:07:44.9811072-05:00 | Populate inbox thread bodies from latest message or preserved Meta snippet
+
+- Task: Make inbox threads show meaningful body text instead of a generic blank/no-body state when a conversation exists but imported `messages` rows are missing.
+- Context: After the previous IG fixes, the Brooke Vinson asset had a second Instagram thread in production with zero imported messages. The inbox list and thread view were both driven by `conversation.subject`, so those threads still looked effectively empty even though a preserved Meta snippet existed at the conversation level.
+- Files changed: `lib/repositories/dashboard-repository.ts`, `lib/services/inbox-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `rg -n "No body|preview|threadMessages|getInboxData|getConversations" components/inbox components lib/services lib/repositories app/api/inbox types`; `Get-Content components/inbox/inbox-workspace.tsx`; `Get-Content lib/services/inbox-service.ts`; `Get-Content -LiteralPath 'app/api/inbox/conversations/[conversationId]/route.ts'`; `cmd /c npm run lint`; `cmd /c npm run build`; `cmd /c npm run typecheck`; `cmd /c npx vercel deploy --prod --yes`; production Node HTTPS checks against inbox conversation list and thread APIs for Brooke Vinson; `Get-Date -Format o`
+- Errors encountered:
+  1. `typecheck` initially failed because `.next/types/link.d.ts` and `.next/types/validator.ts` were stale/missing; running `cmd /c npm run build` regenerated them and the follow-up `typecheck` passed.
+  2. The live Brooke zero-message thread still had no real imported message rows, so only a snippet-level fallback could be shown in this pass.
+- Fix or decision:
+  1. `dashboardRepository.getConversations(...)` now derives `preview` from the latest real message body when available.
+  2. If no message row exists, the repository now falls back to the latest relevant `communication_archive_events` payload snippet before falling back to the subject.
+  3. `getInboxData(...)` now injects a single synthetic display-only fallback message when the selected thread has zero imported messages but does have a preserved preview/snippet.
+  4. Deployed production and verified the Brooke zero-message thread now returns one non-empty fallback message body instead of `messages: []`.
+- Rationale: Operators need the inbox to render usable thread text even when Meta only gave the app a thread-level snippet and no readable message rows. Using the newest imported message body first preserves correctness, and the snippet fallback avoids the dead empty-thread experience without pretending we imported more rows than we actually have.
+- Rollback plan: Remove the conversation preview enrichment from `lib/repositories/dashboard-repository.ts`, remove the synthetic fallback message from `lib/services/inbox-service.ts`, redeploy production, and revert these `.agent/` memory-file updates if this record is incorrect.
+- Next steps: Keep investigating why some IG threads still have zero imported message rows even after the Page-backed fix, because this pass improves display fidelity but does not manufacture missing Meta message history.
+
 ## 2026-04-06T12:02:22.4926547-05:00 | Commit marketplace-deals feature and deploy production from a clean snapshot
 
 - Task: Commit the marketplace-deals feature, record the commit/deploy outcome in repo memory, and deploy production without shipping unrelated dirty files from the local worktree.

@@ -1,23 +1,33 @@
-import Link from "next/link";
-
-import { Button } from "@/components/ui/button";
-
 const sections = [
   {
-    title: "Essential storage",
-    body: "Used to remember consent choices and keep a first-party visitor identifier and session token working across page loads."
+    title: "Information we process",
+    body:
+      "Meta Dashboard processes business contact information, Page and Instagram messages, lead form submissions, campaign and ad reporting data, technical request logs, and operator audit records needed to run the dashboard."
   },
   {
-    title: "Analytics",
-    body: "If enabled, we measure visits, landing-page performance, route usage, and form engagement to improve the site and reporting."
+    title: "How we use data",
+    body:
+      "We use this information to review and respond to customer inquiries, synchronize supported Meta business assets, monitor campaign performance, route leads, maintain operational records, and secure the service against misuse."
   },
   {
-    title: "Marketing",
-    body: "If enabled, we may retain campaign and ad-response data such as UTM parameters, fbclid, _fbc, and _fbp when those values are present and lawfully obtained."
+    title: "Data sources",
+    body:
+      "Data may be received directly from Meta platforms such as Facebook Pages, Instagram professional accounts, and Meta lead forms, as well as from internal operator activity inside the dashboard."
   },
   {
-    title: "Texas privacy rights",
-    body: "Texas residents may have rights to confirm, access, correct, delete, and obtain a copy of personal data, and to opt out of targeted advertising or certain profiling uses, subject to the Texas Data Privacy and Security Act and applicable exemptions."
+    title: "Sharing and disclosure",
+    body:
+      "We do not sell personal information. Data may be shared with service providers or internal business operators only as needed to host, secure, maintain, support, or lawfully operate the dashboard and connected business workflows."
+  },
+  {
+    title: "Retention",
+    body:
+      "Operational records, message archives, webhook logs, and related compliance records may be retained for support, legal, security, and business recordkeeping purposes for as long as reasonably necessary."
+  },
+  {
+    title: "Your choices",
+    body:
+      "If you believe your personal information has been processed through this app and you want to request deletion or ask a privacy question, use the deletion callback flow configured in Meta or contact the business operator responsible for the connected asset."
   }
 ];
 
@@ -25,11 +35,10 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-[var(--background)] p-6 md:p-8">
       <div className="mx-auto max-w-4xl rounded-[32px] border border-[var(--border)] bg-[var(--panel)] p-8 shadow-[var(--shadow-soft)] md:p-10">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Privacy notice</p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-slate-950">First-party data and consent notice</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Privacy Policy</p>
+        <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-slate-950">Meta Dashboard privacy policy</h1>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[var(--muted)]">
-          This page explains the categories used by the site banner and the operational data model behind visitor, session, attribution, consent, and form-submission records.
-          It should be reviewed by counsel before production launch.
+          This privacy policy explains how Meta Dashboard handles information received through connected Meta business assets and related dashboard operations.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -42,21 +51,22 @@ export default function PrivacyPage() {
         </div>
 
         <section className="mt-8 rounded-2xl border border-[var(--border)] bg-slate-50 p-5">
-          <h2 className="text-lg font-semibold text-slate-950">Contact and retention notes</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Data deletion callback</h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-            Submitted lead information, attribution data, and internal CRM notes may be retained in company systems for follow-up, reporting, fraud review, and operational recordkeeping.
-            Sensitive-data use and any production rights-request workflow should be finalized with counsel and operations before launch.
+            Meta data deletion requests for this app are handled through the configured callback endpoint at
+            {" "}
+            <span className="font-mono text-slate-900">https://tjware.me/api/meta/data-deletion</span>.
           </p>
         </section>
 
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Button asChild>
-            <Link href="/login">Back To Login</Link>
-          </Button>
-          <Button asChild variant="secondary">
-            <Link href="/overview">Go To Dashboard</Link>
-          </Button>
-        </div>
+        <section className="mt-4 rounded-2xl border border-[var(--border)] bg-slate-50 p-5">
+          <h2 className="text-lg font-semibold text-slate-950">Contact</h2>
+          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+            For privacy questions or operational data concerns related to this dashboard, contact the business operator responsible for the connected Meta asset that collected the data.
+          </p>
+        </section>
+
+        <p className="mt-8 text-xs uppercase tracking-[0.18em] text-[var(--muted-soft)]">Last updated: April 5, 2026</p>
       </div>
     </main>
   );

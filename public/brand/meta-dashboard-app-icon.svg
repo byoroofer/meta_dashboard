@@ -1,0 +1,41 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="224" y1="760" x2="800" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#14B8A6"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <rect x="160" y="160" width="704" height="704" rx="170" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+  <path d="M256 740C256 717.909 273.909 700 296 700H728C750.091 700 768 717.909 768 740C768 762.091 750.091 780 728 780H296C273.909 780 256 762.091 256 740Z" fill="url(#accent)"/>
+  <text
+    x="512"
+    y="508"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    fill="#F8FAFC"
+    font-family="Segoe UI, Arial, sans-serif"
+    font-size="228"
+    font-weight="700"
+    letter-spacing="10"
+  >
+    DASH
+  </text>
+  <text
+    x="512"
+    y="622"
+    text-anchor="middle"
+    fill="#94A3B8"
+    font-family="Segoe UI, Arial, sans-serif"
+    font-size="48"
+    font-weight="600"
+    letter-spacing="24"
+  >
+    META DASHBOARD
+  </text>
+</svg>
