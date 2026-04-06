@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T18:27:32.8402188-05:00 | Fix marketplace alert typing and redeploy production
+
+- Change summary: Fixed `MarketplaceAlertChannel` typing in the marketplace scan flow, pushed the updates, and redeployed production.
+- Files changed: `lib/services/marketplace-deals-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `git remote set-url origin https://github.com/byoroofer/meta_dashboard.git`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Revert commits `fbef02d` and `655e543` if this fix needs to be removed.
+  2. Redeploy the prior production deployment from Vercel.
+  3. Append a correction entry here if this record is inaccurate.
+- Notes: Production deployment succeeded and aliased to `https://tjware.me`.
+
 ## 2026-04-06T15:59:58.7073187-05:00 | Marketplace live adapters, alerts, and schedules
 
 - Change summary: Added live marketplace adapters (eBay Browse API, SerpApi Google Shopping), alert storage + webhook option, schedule-ready scan runner endpoint, expanded marketplace UI, and a new Supabase migration for alerts/scheduling.

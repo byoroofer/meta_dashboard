@@ -2,6 +2,24 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-06T18:27:32.8402188-05:00 | Fix marketplace alert typing and redeploy production
+
+- Task: Resolve the production build failure on the marketplace alerts channel typing, then push and deploy the fix.
+- Context: The Vercel production build failed because `channel` inferred as `string` did not satisfy `MarketplaceAlertChannel`.
+- Files changed: `lib/services/marketplace-deals-service.ts`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `git add .`; `git commit -m "Add live marketplace adapters and alerts"`; `git push origin codex/marketplace-deals` (initial attempt failed due to local-origin remote); `git remote set-url origin https://github.com/byoroofer/meta_dashboard.git`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`; `git add lib/services/marketplace-deals-service.ts`; `git commit -m "Fix marketplace alert channel typing"`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`; `Get-Date -Format o`
+- Errors encountered:
+  1. Vercel build failed with `Type 'string' is not assignable to type 'MarketplaceAlertChannel'` at `lib/services/marketplace-deals-service.ts`.
+  2. Initial `git push` attempts failed because the clone's `origin` pointed to the local path (`D:\Meta Dashboard`) and Git bash could not create a signal pipe.
+  3. The first `vercel deploy` timed out while the build was still running.
+- Fix or decision:
+  1. Typed `channels` as `MarketplaceAlertChannel[]` and redeployed.
+  2. Repointed `origin` to `https://github.com/byoroofer/meta_dashboard.git` and pushed the branch.
+  3. Re-ran `vercel deploy --prod --yes` with a longer timeout.
+- Rationale: Production must compile cleanly; channel typing needs to match the `MarketplaceAlertChannel` union for alert persistence.
+- Rollback plan: Revert commits `fbef02d` and `655e543`, redeploy the prior Vercel deployment, and update `.agent/` memory with a correction if the logged state is inaccurate.
+- Next steps: Apply `0013_marketplace_alerts.sql` in the target database, configure API keys, and wire a cron to `POST /api/marketplace-deals/schedules/run`.
+
 ## 2026-04-06T15:59:58.7073187-05:00 | Add live marketplace adapters, alerts, and scheduled scans
 
 - Task: Extend the marketplace-deals stack with live source adapters (official APIs), alerting, and schedule-ready scan orchestration while keeping AI pricing grounded in fetched comps.
