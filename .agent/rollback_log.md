@@ -2,6 +2,18 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T12:02:22.4926547-05:00 | Commit marketplace-deals branch and deploy production from clean temp clone
+
+- Change summary: Created branch `codex/marketplace-deals`, committed the marketplace-deals feature as `ff6cba6` (`Add marketplace deals workflow`), then deployed that committed branch to Vercel production from a clean temporary clone so unrelated dirty files in the active worktree were not included.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `git checkout -b codex/marketplace-deals`; `git add -- ...`; `git commit -m "Add marketplace deals workflow"`; escalated PowerShell command that cloned `codex/marketplace-deals` into `D:\Temp\meta-dashboard-marketplace-deploy`, copied `.vercel`, and ran `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Use Vercel to redeploy the prior production deployment if the new deployment must be rolled back quickly.
+  2. Revert commit `ff6cba6` and the follow-up memory commit on `codex/marketplace-deals` if the branch history needs to back out this work.
+  3. Remove or ignore the temporary deployment clone under `D:\Temp\meta-dashboard-marketplace-deploy` if it is no longer needed.
+  4. Append a correction entry here if any part of this record is inaccurate.
+- Notes: Production alias returned to `https://tjware.me`; deployment URL was `https://meta-dashboard-fesc197vl-byoroofers-projects.vercel.app`.
+
 ## 2026-04-06T10:55:13.2914491-05:00 | Marketplace-deals feature, schema, and API surface
 
 - Change summary: Added the new `/marketplace-deals` dashboard page and listing-detail page, new marketplace API routes, a modular marketplace engine (`lib/marketplace/**`), a new repository/service pair for saved searches and scan persistence, a new Supabase migration `0012_marketplace_deals.sql`, new OpenAI env plumbing, and README/memory updates. The initial enabled adapters are demo-only and the marketplace pages were forced dynamic after build verification.

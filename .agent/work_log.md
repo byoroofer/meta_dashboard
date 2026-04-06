@@ -2,6 +2,25 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-06T12:02:22.4926547-05:00 | Commit marketplace-deals feature and deploy production from a clean snapshot
+
+- Task: Commit the marketplace-deals feature, record the commit/deploy outcome in repo memory, and deploy production without shipping unrelated dirty files from the local worktree.
+- Context: The user asked to commit the work, keep memory current, and deploy the site. The workspace still contained many unrelated in-progress files outside the marketplace-deals scope, so deploying directly from the live worktree would have been unsafe.
+- Files changed: `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `git branch --show-current`; `git rev-parse HEAD`; `git status --short`; `git diff --name-only`; `git checkout -b codex/marketplace-deals`; `git add -- ...marketplace files...`; `git config user.name`; `git commit -m "Add marketplace deals workflow"`; `Get-Date -Format o`; escalated PowerShell command to clone branch `codex/marketplace-deals` into `D:\Temp\meta-dashboard-marketplace-deploy`, copy `.vercel`, and run `cmd /c npx vercel deploy --prod --yes`
+- Errors encountered:
+  1. The repo already had many unrelated dirty/untracked files, which made a direct production deploy from the working directory too risky.
+  2. Deployment therefore had to be rerouted through a clean temporary clone of the committed branch.
+- Fix or decision:
+  1. Created branch `codex/marketplace-deals`.
+  2. Staged only the marketplace-deals feature files and its associated docs/memory updates.
+  3. Created commit `ff6cba6` with message `Add marketplace deals workflow`.
+  4. Deployed production from a clean temporary clone of that branch.
+  5. Vercel production deployment succeeded at `https://meta-dashboard-fesc197vl-byoroofers-projects.vercel.app` and aliased back to `https://tjware.me`.
+- Rationale: This preserved the user-requested feature commit and deployment while preventing unrelated local work from being included in production.
+- Rollback plan: Redeploy the prior Vercel production build if needed, then revert commit `ff6cba6` or its follow-up memory commit on `codex/marketplace-deals` rather than touching the unrelated dirty files still present in the worktree.
+- Next steps: Push branch `codex/marketplace-deals` if the user wants the new commit preserved on the remote, then apply `0012_marketplace_deals.sql` in the target Supabase environment before relying on persistent marketplace scan history there.
+
 ## 2026-04-06T10:55:13.2914491-05:00 | Build marketplace-deals page, scan pipeline, and Supabase schema
 
 - Task: Add a new `/marketplace-deals` dashboard surface with saved search presets, manual scans, comparable-listing analysis, OpenAI-powered fair-value estimation, CSV export, operator status tracking, and a Supabase schema for persisted scan history.
