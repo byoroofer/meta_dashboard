@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T18:34:20.9667282-05:00 | Add Vercel cron for marketplace schedules
+
+- Change summary: Added a Vercel cron entry to call the marketplace schedule runner hourly.
+- Files changed: `vercel.json`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: None (file edit only; deployment pending).
+- Reversal steps:
+  1. Remove the `crons` block from `vercel.json`.
+  2. Redeploy the project.
+  3. Update `.agent/` memory with a correction entry if needed.
+- Notes: Cron will only activate after a deploy.
+
 ## 2026-04-06T18:27:32.8402188-05:00 | Fix marketplace alert typing and redeploy production
 
 - Change summary: Fixed `MarketplaceAlertChannel` typing in the marketplace scan flow, pushed the updates, and redeployed production.

@@ -2,6 +2,18 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-06T18:34:20.9667282-05:00 | Add Vercel cron for marketplace schedules
+
+- Task: Enable scheduled scans by wiring a Vercel cron to the marketplace schedule runner.
+- Context: User asked to proceed with Vercel setup before configuring live API keys and testing scans.
+- Files changed: `vercel.json`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Added an hourly cron entry for `/meta-dashboard/api/marketplace-deals/schedules/run`.
+- Rationale: Cron-ready schedule runner exists; adding the Vercel cron activates scheduled scans without new code.
+- Rollback plan: Remove the `crons` block from `vercel.json`, redeploy, and update `.agent/` memory files with a correction if needed.
+- Next steps: Deploy the Vercel config change, then add API keys and run a live scan to validate ingestion.
+
 ## 2026-04-06T18:27:32.8402188-05:00 | Fix marketplace alert typing and redeploy production
 
 - Task: Resolve the production build failure on the marketplace alerts channel typing, then push and deploy the fix.

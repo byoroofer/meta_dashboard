@@ -10,11 +10,11 @@
 
 ## OPEN-2026-04-06-17 | Scheduled scans and alerts are manual-run only
 
-- Status: open
+- Status: resolved 2026-04-06T18:34:20-05:00
 - Area: marketplace automation
-- Summary: A schedule-ready runner exists at `POST /api/marketplace-deals/schedules/run` and alerts are stored in `marketplace_alerts`, but no cron or background job invokes the runner yet.
-- Impact: Saved searches can store schedule settings, but scans will not auto-run until a scheduler calls the endpoint.
-- Next action: Wire a cron trigger (Vercel Cron or external scheduler) to call the runner endpoint and confirm alerts appear on schedule.
+- Summary: Added a Vercel cron entry to call `POST /meta-dashboard/api/marketplace-deals/schedules/run` hourly.
+- Impact: Saved searches can now execute on schedule once the cron is active in the project.
+- Next action: Monitor the alert inbox to confirm scheduled runs are firing as expected.
 
 ## OPEN-2026-04-06-15 | Brooke Vinson IG history still appears incomplete after the Page-backed fix
 

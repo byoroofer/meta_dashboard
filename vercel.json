@@ -21,5 +21,11 @@
       "source": "/api/meta/data-deletion",
       "destination": "/meta-dashboard/api/meta/data-deletion"
     }
+  ],
+  "crons": [
+    {
+      "path": "/meta-dashboard/api/marketplace-deals/schedules/run",
+      "schedule": "0 * * * *"
+    }
   ]
 }
