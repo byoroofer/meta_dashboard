@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T18:36:28.2024046-05:00 | Deploy Vercel cron configuration
+
+- Change summary: Committed and deployed Vercel cron config for marketplace schedules.
+- Files changed: `vercel.json`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Remove the `crons` block from `vercel.json` and redeploy.
+  2. Use Vercel rollback/promote to return to the prior production deployment if needed.
+  3. Append a correction entry here if this log is inaccurate.
+- Notes: Production alias now points to `https://meta-dashboard-l19srdkfl-byoroofers-projects.vercel.app`.
+
 ## 2026-04-06T18:34:20.9667282-05:00 | Add Vercel cron for marketplace schedules
 
 - Change summary: Added a Vercel cron entry to call the marketplace schedule runner hourly.

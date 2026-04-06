@@ -2,6 +2,18 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-06T18:36:28.2024046-05:00 | Deploy Vercel cron configuration
+
+- Task: Deploy the Vercel cron config for marketplace schedules.
+- Context: User asked for Vercel cron first before configuring live API keys and tests.
+- Files changed: `vercel.json`, `.agent/open_issues.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `git add vercel.json .agent/open_issues.md .agent/work_log.md .agent/rollback_log.md .agent/session_handoff.md`; `git commit -m "Add Vercel cron for marketplace schedules"`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`; `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Cron now calls `/meta-dashboard/api/marketplace-deals/schedules/run` hourly.
+- Rationale: Activates schedule runner without changing application logic.
+- Rollback plan: Remove the `crons` block from `vercel.json`, redeploy, and log a correction if needed.
+- Next steps: Configure live API keys in Vercel and run a scan to validate ingestion.
+
 ## 2026-04-06T18:34:20.9667282-05:00 | Add Vercel cron for marketplace schedules
 
 - Task: Enable scheduled scans by wiring a Vercel cron to the marketplace schedule runner.
