@@ -171,7 +171,9 @@ export async function runMarketplaceScan(request: MarketplaceScanRequest) {
     const threshold = savedSearch?.alertThresholdScore ?? 82;
     if (analysis.dealScore >= threshold) {
       dealCount += 1;
-      const channels = savedSearch?.notificationChannels?.length ? savedSearch.notificationChannels : ["dashboard"];
+      const channels: MarketplaceAlertChannel[] = savedSearch?.notificationChannels?.length
+        ? savedSearch.notificationChannels
+        : ["dashboard"];
       for (const channel of channels) {
         const alert = await marketplaceDealsRepository.createAlert({
           savedSearchId: savedSearch?.id ?? null,
