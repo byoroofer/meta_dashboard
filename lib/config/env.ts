@@ -20,6 +20,11 @@ const envSchema = z.object({
   META_MESSAGING_PAGE_ACCESS_TOKEN: z.string().default(""),
   OPENAI_API_KEY: z.string().default(""),
   OPENAI_MODEL: z.string().default("gpt-5-mini"),
+  EBAY_CLIENT_ID: z.string().default(""),
+  EBAY_CLIENT_SECRET: z.string().default(""),
+  EBAY_MARKETPLACE_ID: z.string().default("EBAY_US"),
+  SERPAPI_API_KEY: z.string().default(""),
+  MARKETPLACE_ALERT_WEBHOOK_URL: z.string().default(""),
   ENCRYPTION_KEY: z.string().default(""),
   DASHBOARD_ADMIN_PASSWORD: z.string().default(""),
   DEMO_USER_EMAIL: z.string().default("ops@meta-dashboard.internal")
@@ -45,6 +50,11 @@ export const env = envSchema.parse({
   META_MESSAGING_PAGE_ACCESS_TOKEN: process.env.META_MESSAGING_PAGE_ACCESS_TOKEN,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OPENAI_MODEL: process.env.OPENAI_MODEL,
+  EBAY_CLIENT_ID: process.env.EBAY_CLIENT_ID,
+  EBAY_CLIENT_SECRET: process.env.EBAY_CLIENT_SECRET,
+  EBAY_MARKETPLACE_ID: process.env.EBAY_MARKETPLACE_ID,
+  SERPAPI_API_KEY: process.env.SERPAPI_API_KEY,
+  MARKETPLACE_ALERT_WEBHOOK_URL: process.env.MARKETPLACE_ALERT_WEBHOOK_URL,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   DASHBOARD_ADMIN_PASSWORD: process.env.DASHBOARD_ADMIN_PASSWORD,
   DEMO_USER_EMAIL: process.env.DEMO_USER_EMAIL
@@ -59,6 +69,9 @@ export const hasMetaConfig = Boolean(
     env.META_WEBHOOK_APP_SECRET
 );
 export const hasMetaSystemUser = Boolean(env.META_SYSTEM_USER_ACCESS_TOKEN);
+export const hasEbayBrowseConfig = Boolean(env.EBAY_CLIENT_ID && env.EBAY_CLIENT_SECRET);
+export const hasSerpApiConfig = Boolean(env.SERPAPI_API_KEY);
+export const hasMarketplaceAlertWebhook = Boolean(env.MARKETPLACE_ALERT_WEBHOOK_URL);
 
 function parseMessagingPageTokenMap(raw: string) {
   const trimmed = raw.trim();
@@ -130,6 +143,9 @@ export function getConfigStatus() {
     metaMessagingPageOverride: getMetaMessagingPageOverrideCount() > 0,
     metaMessagingPageOverrideCount: getMetaMessagingPageOverrideCount(),
     openAiPricing: Boolean(env.OPENAI_API_KEY),
+    ebayBrowseApi: hasEbayBrowseConfig,
+    serpApi: hasSerpApiConfig,
+    marketplaceAlertWebhook: hasMarketplaceAlertWebhook,
     encryptionKey: Boolean(env.ENCRYPTION_KEY),
     adminPassword: Boolean(env.DASHBOARD_ADMIN_PASSWORD)
   };

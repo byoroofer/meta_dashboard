@@ -2,6 +2,18 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-06T15:59:58.7073187-05:00 | Marketplace live adapters, alerts, and schedules
+
+- Change summary: Added live marketplace adapters (eBay Browse API, SerpApi Google Shopping), alert storage + webhook option, schedule-ready scan runner endpoint, expanded marketplace UI, and a new Supabase migration for alerts/scheduling.
+- Files changed: `components/marketplace/marketplace-deals-workspace.tsx`, `components/marketplace/listing-detail-panel.tsx`, `lib/marketplace/adapters/index.ts`, `lib/marketplace/adapters/ebay-browse.ts`, `lib/marketplace/adapters/serpapi.ts`, `lib/marketplace/normalization.ts`, `lib/marketplace/schemas.ts`, `lib/services/marketplace-deals-service.ts`, `lib/repositories/marketplace-deals-repository.ts`, `lib/config/env.ts`, `app/api/marketplace-deals/alerts/route.ts`, `app/api/marketplace-deals/schedules/run/route.ts`, `types/marketplace.ts`, `types/database.ts`, `supabase/migrations/0013_marketplace_alerts.sql`, `.env.example`, `README.md`, `.agent/*.md`.
+- State-changing commands: `git clone D:\Meta Dashboard D:\Meta Dashboard\_worktrees\marketplace-engine2`; `git checkout codex/marketplace-deals`
+- Reversal steps:
+  1. Delete `lib/marketplace/adapters/ebay-browse.ts`, `lib/marketplace/adapters/serpapi.ts`, `app/api/marketplace-deals/alerts/route.ts`, `app/api/marketplace-deals/schedules/run/route.ts`, and `supabase/migrations/0013_marketplace_alerts.sql`.
+  2. Revert updates in `components/marketplace/marketplace-deals-workspace.tsx`, `lib/services/marketplace-deals-service.ts`, `lib/repositories/marketplace-deals-repository.ts`, `types/marketplace.ts`, `types/database.ts`, `lib/marketplace/normalization.ts`, `lib/marketplace/schemas.ts`, `lib/marketplace/adapters/index.ts`, `lib/config/env.ts`, `.env.example`, and `README.md`.
+  3. Apply a corrective migration to drop `marketplace_alerts` and the added columns from `marketplace_saved_searches` if the DB has already been migrated.
+  4. Update `.agent/` memory files with a correction entry if this record is inaccurate.
+- Notes: No tests were run in this pass; verify typecheck/lint/build after reverting.
+
 ## 2026-04-06T12:18:15.2918088-05:00 | Production scoped sync retry for Elite Cleaning and Brooke Vinson
 
 - Change summary: Re-ran live scoped Meta sync attempts for the Brooke Vinson Instagram asset and Elite Cleaning Page asset, verified the resulting production audit/state, and confirmed that at least one scoped sync completed successfully on the server even though both client requests ended with `ECONNRESET`.

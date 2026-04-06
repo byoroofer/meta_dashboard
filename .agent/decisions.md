@@ -2,6 +2,14 @@
 
 Purpose: record active architectural and workflow decisions. Keep entries newest first and append updates instead of rewriting history.
 
+## DEC-2026-04-06-07 | Use official marketplace APIs with env-gated adapters and manual schedule runner
+
+- Status: active
+- Date: 2026-04-06T16:12:41.0000000-05:00
+- Decision: Add live marketplace adapters only for official/public APIs (eBay Browse API and SerpApi Google Shopping) and gate each adapter behind explicit environment variables. Provide a manual schedule runner endpoint (`POST /api/marketplace-deals/schedules/run`) and alerting that can later be triggered by cron or background jobs.
+- Rationale: The product requirements forbid scraping protected or private sources and require honoring terms/robots. Using official APIs keeps access compliant and allows explicit opt-in. A manual runner keeps the system usable now while deferring cron wiring until infra is confirmed.
+- Consequences: Live scans are available once API keys are configured, but production automation still needs a scheduler to invoke the runner endpoint. Future sources must add their own adapters and env gating.
+
 ## DEC-2026-04-06-06 | Ship marketplace-deals with demo adapters first and keep live sources opt-in
 
 - Status: active

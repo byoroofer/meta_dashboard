@@ -55,5 +55,6 @@ export type DatabaseTableName =
   | "marketplace_listing_comps"
   | "marketplace_listing_status"
   | "marketplace_source_errors"
+  | "marketplace_alerts"
   | "sync_jobs"
   | "audit_logs";

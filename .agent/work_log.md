@@ -2,6 +2,23 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-06T15:59:58.7073187-05:00 | Add live marketplace adapters, alerts, and scheduled scans
+
+- Task: Extend the marketplace-deals stack with live source adapters (official APIs), alerting, and schedule-ready scan orchestration while keeping AI pricing grounded in fetched comps.
+- Context: The user asked to build the live search engine, enable auto searches and alerts, and use OpenAI only for structured reasoning over fetched listings.
+- Files changed: `components/marketplace/marketplace-deals-workspace.tsx`, `components/marketplace/listing-detail-panel.tsx`, `lib/marketplace/adapters/index.ts`, `lib/marketplace/adapters/ebay-browse.ts`, `lib/marketplace/adapters/serpapi.ts`, `lib/marketplace/normalization.ts`, `lib/marketplace/schemas.ts`, `lib/services/marketplace-deals-service.ts`, `lib/repositories/marketplace-deals-repository.ts`, `lib/config/env.ts`, `app/api/marketplace-deals/alerts/route.ts`, `app/api/marketplace-deals/schedules/run/route.ts`, `types/marketplace.ts`, `types/database.ts`, `supabase/migrations/0013_marketplace_alerts.sql`, `.env.example`, `README.md`, plus `.agent/` memory files.
+- Commands run: `Get-Date -Format o`; `git clone D:\Meta Dashboard D:\Meta Dashboard\_worktrees\marketplace-engine2`; `git checkout codex/marketplace-deals`; multiple `Get-Content` and `rg -n` inspections.
+- Errors encountered:
+  1. `apply_patch` hit the Windows command-length limit (`CreateProcessAsUserW failed: 206`), so large files were rebuilt in smaller patches.
+  2. The initial git worktree attempt produced a missing directory, so work continued from a clean local clone.
+- Fix or decision:
+  1. Added official API adapters for eBay Browse and SerpApi Google Shopping, kept sources modular and opt-in based on env configuration.
+  2. Added schedule fields and alert storage (`marketplace_alerts`) with a cron-ready runner route and webhook notification option.
+  3. Expanded the marketplace UI with live search query, source toggles, schedule configuration, and alert inbox.
+- Rationale: Live pricing must be derived from fetched listings and structured AI reasoning, not model memory. Using public APIs keeps access compliant while preserving extensibility for additional sources.
+- Rollback plan: Remove the new adapters, alerts routes, and `0013_marketplace_alerts.sql`; restore the marketplace workspace to demo-only behavior; revert `.env.example`, `README.md`, and updated types; update `.agent/` files with a correction entry if needed.
+- Next steps: Apply migration `0013_marketplace_alerts.sql` in the target Supabase environment, configure API keys and webhook URL in production, and wire a cron trigger to `POST /api/marketplace-deals/schedules/run`.
+
 ## 2026-04-06T12:18:15.2918088-05:00 | Continue live production sync attempts for Elite Cleaning and Brooke Vinson
 
 - Task: Keep pushing the production importer forward by checking current live connected-account state, re-running scoped imports for the Elite Cleaning Page and Brooke Vinson Instagram asset, and verifying whether inbox counts or connected assets changed.

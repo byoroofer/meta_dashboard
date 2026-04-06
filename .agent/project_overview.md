@@ -1,6 +1,6 @@
 # Project Overview
 
-- Last updated: 2026-04-02T18:44:50-05:00
+- Last updated: 2026-04-06T16:12:41-05:00
 - Source docs: `README.md`, `package.json`, repository layout audit
 
 ## Mission
@@ -12,7 +12,8 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 - Frontend is a Next.js App Router application using TypeScript.
 - Shared UI primitives live under `components/ui` with feature workspaces under `components/*`.
 - A standalone Python social engagement bot scaffold now exists under `automation/social_engagement_bot` for Reddit/Facebook keyword monitoring and OpenAI-generated reply drafting, with one-shot mode, env-file loading, and intent-based reply gating.
-- A new `/marketplace-deals` operator workflow now exists for saved search presets, manual listing scans, comparable-listing review, fair-value estimation, CSV export, and operator deal tracking.
+- A new `/marketplace-deals` operator workflow now exists for saved search presets, manual listing scans, comparable-listing review, fair-value estimation, CSV export, operator deal tracking, and alert inbox.
+- Marketplace live adapters exist for official APIs (eBay Browse, SerpApi Google Shopping) and are gated by environment configuration.
 - Primary dashboard pages now read only from live Supabase-backed sources; when admin config or live rows are missing, the UI shows empty results instead of sample data.
 - Server-side persistence paths exist for webhook and outbound messaging flows when privileged Supabase configuration is present.
 - Operators can switch the active dashboard scope by connected business and ad account from the shared header.
@@ -30,7 +31,7 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 - `lib/repositories/`: repository adapters, including current mock-backed implementations.
 - `lib/db/supabase/`: Supabase client/server/admin entry points.
 - `lib/meta/`: Meta API integration and webhook processing helpers.
-- `supabase/migrations/`: SQL migrations currently present from `0001` through `0012`.
+- `supabase/migrations/`: SQL migrations currently present from `0001` through `0013`.
 - `.agent/`: durable memory for cross-session work.
 
 ## Local Commands
@@ -63,7 +64,8 @@ Meta Dashboard is a private internal business dashboard for supported Meta busin
 
 - Live dashboard reads still depend on Supabase table population and incomplete upstream sync jobs.
 - The deployed Meta importer is still blocked in production until `SUPABASE_SERVICE_ROLE_KEY`, `META_APP_ID`, `META_APP_SECRET`, and `META_SYSTEM_USER_ACCESS_TOKEN` are configured.
-- The marketplace-deals feature runs end-to-end with demo adapters locally today; live source adapters are still intentionally disabled pending source-by-source legal and technical review.
+- The marketplace-deals feature runs end-to-end with demo adapters locally today; live source adapters are opt-in and require API keys plus source-by-source legal review.
+- Scheduled scans require a cron or background job to call the schedule runner endpoint; only manual runs are wired today.
 - Outbound Meta transport is not fully connected.
 - Portal target-specific adapters remain incomplete.
 - Documentation drift exists between `README.md` and the actual migration set.

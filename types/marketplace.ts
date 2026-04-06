@@ -13,7 +13,10 @@ export type MarketplaceOperatorStatus = "new" | "watched" | "ignored" | "contact
 
 export type MarketplaceRiskSeverity = "low" | "medium" | "high";
 
+export type MarketplaceAlertChannel = "dashboard" | "webhook" | "email" | "sms";
+
 export interface MarketplaceSearchCriteria {
+  query: string;
   category: string;
   keywords: string[];
   mustIncludeWords: string[];
@@ -38,6 +41,9 @@ export interface MarketplaceSavedSearch {
   criteria: MarketplaceSearchCriteria;
   scheduleEnabled: boolean;
   scheduleLabel: string | null;
+  scheduleFrequencyMinutes: number | null;
+  nextRunAt: string | null;
+  notificationChannels: MarketplaceAlertChannel[];
   alertThresholdScore: number;
   lastScannedAt: string | null;
   createdAt: string;
@@ -150,6 +156,7 @@ export interface MarketplaceScanSummary {
   id: string;
   savedSearchId: string | null;
   status: "queued" | "running" | "succeeded" | "failed";
+  runReason: string;
   startedAt: string;
   completedAt: string | null;
   listingCount: number;
@@ -159,6 +166,7 @@ export interface MarketplaceScanSummary {
   queryLabel: string;
   summary: string;
   criteriaSnapshot: MarketplaceSearchCriteria;
+  sourceSummary: Record<string, number>;
 }
 
 export interface MarketplaceScanResult {
@@ -190,9 +198,24 @@ export interface MarketplaceListingDetail {
   recentScans: MarketplaceScanSummary[];
 }
 
+export interface MarketplaceAlert {
+  id: string;
+  savedSearchId: string | null;
+  scanId: string | null;
+  listingId: string;
+  dealScore: number;
+  title: string;
+  reasoning: string;
+  channel: MarketplaceAlertChannel;
+  createdAt: string;
+  readAt: string | null;
+  payload: Record<string, unknown>;
+}
+
 export interface MarketplaceDashboardData {
   savedSearches: MarketplaceSavedSearch[];
   scanHistory: MarketplaceScanSummary[];
+  alerts: MarketplaceAlert[];
   activeScanId: string | null;
   results: MarketplaceScanResult[];
   selectedListing: MarketplaceListingDetail | null;
@@ -203,6 +226,7 @@ export interface MarketplaceDashboardData {
 export interface MarketplaceScanRequest {
   savedSearchId?: string;
   criteria?: MarketplaceSearchCriteria;
+  runReason?: string;
 }
 
 export interface MarketplaceSavedSearchCreateInput {
@@ -211,6 +235,8 @@ export interface MarketplaceSavedSearchCreateInput {
   criteria: MarketplaceSearchCriteria;
   scheduleEnabled?: boolean;
   scheduleLabel?: string | null;
+  scheduleFrequencyMinutes?: number | null;
+  notificationChannels?: MarketplaceAlertChannel[];
   alertThresholdScore?: number;
 }
 

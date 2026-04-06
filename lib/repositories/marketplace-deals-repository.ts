@@ -1,6 +1,8 @@
 import { getSupabaseAdminClient } from "@/lib/db/supabase/admin";
 import type {
   MarketplaceAIAnalysis,
+  MarketplaceAlert,
+  MarketplaceAlertChannel,
   MarketplaceComparableListing,
   MarketplaceListingDetail,
   MarketplaceListingStatusRecord,
@@ -37,6 +39,7 @@ interface MarketplaceDemoStore {
   analyses: Record<string, MarketplaceAIAnalysis>;
   comps: Record<string, MarketplaceComparableListing[]>;
   statuses: Record<string, MarketplaceListingStatusRecord>;
+  alerts: MarketplaceAlert[];
   sourceErrors: Array<{ id: string; scanId: string; source: string; errorMessage: string; createdAt: string }>;
 }
 
@@ -46,6 +49,7 @@ const DEFAULT_SAVED_SEARCHES: MarketplaceSavedSearch[] = [
     name: "Milwaukee M18 deals",
     description: "Cordless drill and driver combos under local market value.",
     criteria: {
+      query: "Milwaukee M18 drill kit",
       category: "power tools",
       keywords: ["milwaukee", "drill", "fuel"],
       mustIncludeWords: ["milwaukee"],
@@ -64,6 +68,9 @@ const DEFAULT_SAVED_SEARCHES: MarketplaceSavedSearch[] = [
     },
     scheduleEnabled: false,
     scheduleLabel: "Future cron-ready preset",
+    scheduleFrequencyMinutes: 180,
+    nextRunAt: null,
+    notificationChannels: ["dashboard"],
     alertThresholdScore: 84,
     lastScannedAt: null,
     createdAt: new Date().toISOString(),
@@ -74,6 +81,7 @@ const DEFAULT_SAVED_SEARCHES: MarketplaceSavedSearch[] = [
     name: "Sony A6400 flips",
     description: "Watch mirrorless bodies and kits with room for resale.",
     criteria: {
+      query: "Sony A6400 camera body",
       category: "cameras",
       keywords: ["sony", "a6400"],
       mustIncludeWords: ["sony"],
@@ -92,6 +100,9 @@ const DEFAULT_SAVED_SEARCHES: MarketplaceSavedSearch[] = [
     },
     scheduleEnabled: false,
     scheduleLabel: "Future cron-ready preset",
+    scheduleFrequencyMinutes: 240,
+    nextRunAt: null,
+    notificationChannels: ["dashboard"],
     alertThresholdScore: 82,
     lastScannedAt: null,
     createdAt: new Date().toISOString(),
@@ -111,6 +122,7 @@ function getDemoStore() {
       analyses: {},
       comps: {},
       statuses: {},
+      alerts: [],
       sourceErrors: []
     };
   }
@@ -148,6 +160,9 @@ function mapSavedSearch(row: Row): MarketplaceSavedSearch {
     criteria: obj(row.criteria) as unknown as MarketplaceSavedSearch["criteria"],
     scheduleEnabled: Boolean(row.schedule_enabled),
     scheduleLabel: nullable(row.schedule_label),
+    scheduleFrequencyMinutes: row.schedule_frequency_minutes === null ? null : num(row.schedule_frequency_minutes, 120),
+    nextRunAt: nullable(row.next_run_at),
+    notificationChannels: arr(row.notification_channels).filter((value): value is MarketplaceAlertChannel => typeof value === "string"),
     alertThresholdScore: num(row.alert_threshold_score, 82),
     lastScannedAt: nullable(row.last_scanned_at),
     createdAt: str(row.created_at),
@@ -160,6 +175,7 @@ function mapScan(row: Row): MarketplaceScanSummary {
     id: str(row.id),
     savedSearchId: nullable(row.saved_search_id),
     status: str(row.status, "queued") as MarketplaceScanSummary["status"],
+    runReason: str(row.run_reason, "manual"),
     startedAt: str(row.started_at),
     completedAt: nullable(row.completed_at),
     listingCount: num(row.listing_count),
@@ -168,7 +184,24 @@ function mapScan(row: Row): MarketplaceScanSummary {
     errorCount: num(row.error_count),
     queryLabel: str(row.query_label),
     summary: str(row.summary),
-    criteriaSnapshot: obj(row.criteria_snapshot) as unknown as MarketplaceScanSummary["criteriaSnapshot"]
+    criteriaSnapshot: obj(row.criteria_snapshot) as unknown as MarketplaceScanSummary["criteriaSnapshot"],
+    sourceSummary: obj(row.source_summary) as Record<string, number>
+  };
+}
+
+function mapAlert(row: Row): MarketplaceAlert {
+  return {
+    id: str(row.id),
+    savedSearchId: nullable(row.saved_search_id),
+    scanId: nullable(row.scan_id),
+    listingId: str(row.listing_id),
+    dealScore: num(row.deal_score),
+    title: str(row.title),
+    reasoning: str(row.reasoning),
+    channel: str(row.channel, "dashboard") as MarketplaceAlertChannel,
+    createdAt: str(row.created_at),
+    readAt: nullable(row.read_at),
+    payload: obj(row.payload)
   };
 }
 
@@ -212,6 +245,9 @@ export const marketplaceDealsRepository = {
           criteria: input.criteria,
           scheduleEnabled: input.scheduleEnabled ?? false,
           scheduleLabel: input.scheduleLabel ?? null,
+          scheduleFrequencyMinutes: input.scheduleFrequencyMinutes ?? 120,
+          nextRunAt: null,
+          notificationChannels: input.notificationChannels ?? ["dashboard"],
           alertThresholdScore: input.alertThresholdScore ?? 82,
           lastScannedAt: null,
           createdAt: new Date().toISOString(),
@@ -229,6 +265,8 @@ export const marketplaceDealsRepository = {
             criteria: input.criteria,
             schedule_enabled: input.scheduleEnabled ?? false,
             schedule_label: input.scheduleLabel ?? null,
+            schedule_frequency_minutes: input.scheduleFrequencyMinutes ?? 120,
+            notification_channels: input.notificationChannels ?? ["dashboard"],
             alert_threshold_score: input.alertThresholdScore ?? 82
           })
           .select("*")
@@ -245,26 +283,66 @@ export const marketplaceDealsRepository = {
     return searches.find((search) => search.id === savedSearchId) ?? null;
   },
 
-  async touchSavedSearch(savedSearchId: string | undefined, at: string) {
+  async updateSavedSearch(
+    savedSearchId: string | undefined,
+    updates: Partial<
+      Pick<
+        MarketplaceSavedSearch,
+        "lastScannedAt" | "nextRunAt" | "scheduleEnabled" | "scheduleFrequencyMinutes" | "notificationChannels" | "alertThresholdScore"
+      >
+    >
+  ) {
     if (!savedSearchId) return;
 
     return liveOrFallback(
-      "touchSavedSearch",
+      "updateSavedSearch",
       () => {
         const entry = getDemoStore().savedSearches.find((search) => search.id === savedSearchId);
         if (entry) {
-          entry.lastScannedAt = at;
-          entry.updatedAt = at;
+          if (updates.lastScannedAt !== undefined) entry.lastScannedAt = updates.lastScannedAt;
+          if (updates.nextRunAt !== undefined) entry.nextRunAt = updates.nextRunAt;
+          if (updates.scheduleEnabled !== undefined) entry.scheduleEnabled = updates.scheduleEnabled;
+          if (updates.scheduleFrequencyMinutes !== undefined) entry.scheduleFrequencyMinutes = updates.scheduleFrequencyMinutes ?? null;
+          if (updates.notificationChannels !== undefined) entry.notificationChannels = updates.notificationChannels;
+          if (updates.alertThresholdScore !== undefined) entry.alertThresholdScore = updates.alertThresholdScore;
+          entry.updatedAt = new Date().toISOString();
         }
       },
       async (client) => {
-        const result = await client.from("marketplace_saved_searches").update({ last_scanned_at: at }).eq("id", savedSearchId);
+        const result = await client
+          .from("marketplace_saved_searches")
+          .update({
+            last_scanned_at: updates.lastScannedAt,
+            next_run_at: updates.nextRunAt,
+            schedule_enabled: updates.scheduleEnabled,
+            schedule_frequency_minutes: updates.scheduleFrequencyMinutes ?? undefined,
+            notification_channels: updates.notificationChannels,
+            alert_threshold_score: updates.alertThresholdScore
+          })
+          .eq("id", savedSearchId);
         if (result.error) throw result.error;
       }
     );
   },
 
-  async createScanRun(input: { savedSearchId?: string; queryLabel: string; criteriaSnapshot: MarketplaceScanSummary["criteriaSnapshot"]; sourceCount: number }) {
+  async listScheduledSearchesDue(nowIso: string) {
+    return liveOrFallback(
+      "listScheduledSearchesDue",
+      () => getDemoStore().savedSearches.filter((search) => search.scheduleEnabled && (!search.nextRunAt || search.nextRunAt <= nowIso)),
+      async (client) => {
+        const result = await client
+          .from("marketplace_saved_searches")
+          .select("*")
+          .eq("schedule_enabled", true)
+          .or(`next_run_at.is.null,next_run_at.lte.${nowIso}`)
+          .order("created_at", { ascending: true });
+        if (result.error) throw result.error;
+        return (result.data ?? []).map((row) => mapSavedSearch(row as Row));
+      }
+    );
+  },
+
+  async createScanRun(input: { savedSearchId?: string; queryLabel: string; criteriaSnapshot: MarketplaceScanSummary["criteriaSnapshot"]; sourceCount: number; runReason: string }) {
     return liveOrFallback(
       "createScanRun",
       () => {
@@ -272,6 +350,7 @@ export const marketplaceDealsRepository = {
           id: crypto.randomUUID(),
           savedSearchId: input.savedSearchId ?? null,
           status: "running",
+          runReason: input.runReason,
           startedAt: new Date().toISOString(),
           completedAt: null,
           listingCount: 0,
@@ -280,7 +359,8 @@ export const marketplaceDealsRepository = {
           errorCount: 0,
           queryLabel: input.queryLabel,
           summary: "Scan in progress",
-          criteriaSnapshot: input.criteriaSnapshot
+          criteriaSnapshot: input.criteriaSnapshot,
+          sourceSummary: {}
         };
         getDemoStore().scans.unshift(scan);
         return scan;
@@ -293,6 +373,7 @@ export const marketplaceDealsRepository = {
             query_label: input.queryLabel,
             criteria_snapshot: input.criteriaSnapshot,
             source_count: input.sourceCount,
+            run_reason: input.runReason,
             status: "running"
           })
           .select("*")
@@ -304,7 +385,7 @@ export const marketplaceDealsRepository = {
     );
   },
 
-  async finalizeScanRun(scanId: string, input: Omit<MarketplaceScanSummary, "id" | "savedSearchId" | "startedAt" | "criteriaSnapshot">) {
+  async finalizeScanRun(scanId: string, input: Omit<MarketplaceScanSummary, "id" | "savedSearchId" | "startedAt" | "criteriaSnapshot" | "runReason">) {
     return liveOrFallback(
       "finalizeScanRun",
       () => {
@@ -318,6 +399,7 @@ export const marketplaceDealsRepository = {
           scan.errorCount = input.errorCount;
           scan.queryLabel = input.queryLabel;
           scan.summary = input.summary;
+          scan.sourceSummary = input.sourceSummary;
         }
       },
       async (client) => {
@@ -330,7 +412,8 @@ export const marketplaceDealsRepository = {
             deal_count: input.dealCount,
             source_count: input.sourceCount,
             error_count: input.errorCount,
-            summary: input.summary
+            summary: input.summary,
+            source_summary: input.sourceSummary
           })
           .eq("id", scanId);
 
@@ -354,6 +437,89 @@ export const marketplaceDealsRepository = {
       async (client) => {
         const result = await client.from("marketplace_source_errors").insert({ scan_id: scanId, source, error_message: errorMessage });
         if (result.error) throw result.error;
+      }
+    );
+  },
+
+  async createAlert(input: Omit<MarketplaceAlert, "id" | "createdAt" | "readAt">) {
+    return liveOrFallback(
+      "createAlert",
+      () => {
+        const alert: MarketplaceAlert = {
+          id: crypto.randomUUID(),
+          savedSearchId: input.savedSearchId,
+          scanId: input.scanId,
+          listingId: input.listingId,
+          dealScore: input.dealScore,
+          title: input.title,
+          reasoning: input.reasoning,
+          channel: input.channel,
+          payload: input.payload,
+          createdAt: new Date().toISOString(),
+          readAt: null
+        };
+        getDemoStore().alerts.unshift(alert);
+        return alert;
+      },
+      async (client) => {
+        const result = await client
+          .from("marketplace_alerts")
+          .insert({
+            saved_search_id: input.savedSearchId,
+            scan_id: input.scanId,
+            listing_id: input.listingId,
+            deal_score: input.dealScore,
+            title: input.title,
+            reasoning: input.reasoning,
+            channel: input.channel,
+            payload: input.payload
+          })
+          .select("*")
+          .single();
+
+        if (result.error) throw result.error;
+        return mapAlert(result.data as Row);
+      }
+    );
+  },
+
+  async listAlerts(limit = 30) {
+    return liveOrFallback(
+      "listAlerts",
+      () => getDemoStore().alerts.slice(0, limit),
+      async (client) => {
+        const result = await client
+          .from("marketplace_alerts")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(limit);
+        if (result.error) throw result.error;
+        return (result.data ?? []).map((row) => mapAlert(row as Row));
+      }
+    );
+  },
+
+  async markAlertsRead(alertIds: string[]) {
+    return liveOrFallback(
+      "markAlertsRead",
+      () => {
+        const now = new Date().toISOString();
+        const store = getDemoStore();
+        store.alerts = store.alerts.map((alert) =>
+          alertIds.includes(alert.id) ? { ...alert, readAt: now } : alert
+        );
+        return store.alerts.filter((alert) => alertIds.includes(alert.id));
+      },
+      async (client) => {
+        const now = new Date().toISOString();
+        const result = await client
+          .from("marketplace_alerts")
+          .update({ read_at: now })
+          .in("id", alertIds)
+          .select("*");
+
+        if (result.error) throw result.error;
+        return (result.data ?? []).map((row) => mapAlert(row as Row));
       }
     );
   },

@@ -1,12 +1,20 @@
 # Open Issues
 
-## OPEN-2026-04-06-16 | Marketplace-deals live source adapters are not enabled yet
+## OPEN-2026-04-06-18 | Marketplace live adapters require API keys and explicit enablement
 
 - Status: open
 - Area: marketplace ingestion / legal review
-- Summary: The new `/marketplace-deals` feature now ships with a full Supabase-backed schema, API surface, scoring engine, OpenAI-assisted pricing analysis path, CSV export, saved searches, and operator status tracking. The currently enabled source adapters are intentionally curated demo adapters only. No live marketplace crawling or third-party API adapter has been turned on yet because the implementation must stay within robots-safe, terms-safe, source-specific boundaries.
-- Impact: The feature works locally and is ready for extension, but real online comparable-listing coverage still depends on adding approved live adapters one source at a time. Operators should not treat the current demo adapter output as real market data.
-- Next action: Choose the first legally and technically acceptable public source, document its access policy and rate-limit strategy, then add a dedicated adapter and verification path without broadening the rest of the scan engine.
+- Summary: Official API adapters now exist for eBay Browse and SerpApi Google Shopping, but they are gated behind env vars (`EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `EBAY_MARKETPLACE_ID`, `SERPAPI_API_KEY`). Without these keys, scans fall back to demo-only data.
+- Impact: The UI and pipeline are ready, but live comparable coverage is still limited until API keys are configured and rate limits/terms are reviewed per source.
+- Next action: Add the required API keys in the target environment, confirm the intended marketplaces/regions, and run a manual scan to validate live data ingestion and pricing analysis.
+
+## OPEN-2026-04-06-17 | Scheduled scans and alerts are manual-run only
+
+- Status: open
+- Area: marketplace automation
+- Summary: A schedule-ready runner exists at `POST /api/marketplace-deals/schedules/run` and alerts are stored in `marketplace_alerts`, but no cron or background job invokes the runner yet.
+- Impact: Saved searches can store schedule settings, but scans will not auto-run until a scheduler calls the endpoint.
+- Next action: Wire a cron trigger (Vercel Cron or external scheduler) to call the runner endpoint and confirm alerts appear on schedule.
 
 ## OPEN-2026-04-06-15 | Brooke Vinson IG history still appears incomplete after the Page-backed fix
 
@@ -66,11 +74,11 @@
 
 ## OPEN-2026-04-03-08 | README migration list is behind actual migration state
 
-- Status: open
+- Status: resolved 2026-04-06T16:12:41-05:00
 - Area: documentation
-- Summary: The README documents migrations 0001–0006. The repo now has 0007–0010 and the remote Supabase schema has been pushed through 0010. The README setup instructions will miss required tables if followed literally.
-- Impact: Fresh environments or new operators following only the README will deploy incomplete schema.
-- Next action: Update README's "Database migrations" section to list all migrations through 0010 and note that migrations are pushed via `supabase db push --linked`.
+- Summary: The README migration list now includes `0001` through `0013`, including marketplace migrations and alerts/scheduling.
+- Impact: Fresh environments can follow README without missing marketplace tables.
+- Next action: None.
 
 
 
@@ -126,8 +134,8 @@ Purpose: track unresolved technical risks, bugs, debt, and documentation drift. 
 
 ## OPEN-2026-04-01-01 | README migration list is behind the repo state
 
-- Status: open
+- Status: resolved 2026-04-06T16:12:41-05:00
 - Area: documentation
-- Summary: `README.md` tells operators to apply migrations `0001` through `0006`, but the repo currently contains `0007`, `0008`, and `0009` as well.
-- Impact: Fresh environments following only the README may miss schema required by current code or future work.
-- Next action: Reconcile the documented migration sequence with the full contents of `supabase/migrations/`.
+- Summary: The README now lists migrations `0001` through `0013`.
+- Impact: Documentation is aligned with the repo migration set.
+- Next action: None.

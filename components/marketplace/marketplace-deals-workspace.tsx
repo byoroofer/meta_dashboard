@@ -2,7 +2,7 @@
 
 import type { Route } from "next";
 import Link from "next/link";
-import { Download, Eye, LoaderCircle, RefreshCw, Save, Search, SlidersHorizontal } from "lucide-react";
+import { Bell, Download, Eye, LoaderCircle, RefreshCw, Save, Search, SlidersHorizontal } from "lucide-react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { withBasePath } from "@/lib/config/base-path";
 import { formatCurrency, formatDateTime } from "@/lib/utils";
 import type {
+  MarketplaceAlert,
   MarketplaceDashboardData,
   MarketplaceListingDetail,
   MarketplaceSavedSearch,
@@ -24,6 +25,7 @@ import type {
 } from "@/types/marketplace";
 
 const emptyCriteria: MarketplaceSearchCriteria = {
+  query: "",
   category: "",
   keywords: [],
   mustIncludeWords: [],
@@ -39,6 +41,13 @@ const emptyCriteria: MarketplaceSearchCriteria = {
   requiredProfitMargin: null,
   sourceKeys: [],
   postedWithinHours: 168
+};
+
+const channelLabels: Record<string, string> = {
+  dashboard: "Dashboard",
+  webhook: "Webhook",
+  email: "Email",
+  sms: "SMS"
 };
 
 function parseList(value: string) {
@@ -58,6 +67,7 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
   const [presetDescription, setPresetDescription] = useState("");
   const [savedSearches, setSavedSearches] = useState(initialData.savedSearches);
   const [scanHistory, setScanHistory] = useState(initialData.scanHistory);
+  const [alerts, setAlerts] = useState(initialData.alerts);
   const [results, setResults] = useState(initialData.results);
   const [selectedListing, setSelectedListing] = useState<MarketplaceListingDetail | null>(initialData.selectedListing);
   const [activeScanId, setActiveScanId] = useState<string | null>(initialData.activeScanId);
@@ -68,6 +78,11 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
   const [minConfidence, setMinConfidence] = useState("0");
   const [postedWithinHours, setPostedWithinHours] = useState("all");
   const [sortBy, setSortBy] = useState("best_deal");
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduleFrequency, setScheduleFrequency] = useState("120");
+  const [scheduleLabel, setScheduleLabel] = useState("");
+  const [alertThreshold, setAlertThreshold] = useState("82");
+  const [notificationChannels, setNotificationChannels] = useState<string[]>(["dashboard"]);
   const [isPending, startTransition] = useTransition();
 
   const filteredResults = [...results]
@@ -103,6 +118,14 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
     setSelectedListing(payload.data);
   }
 
+  async function refreshAlerts() {
+    const response = await fetch(withBasePath("/api/marketplace-deals/alerts"));
+    const payload = (await response.json()) as { success?: boolean; data?: MarketplaceAlert[]; error?: string };
+    if (response.ok && payload.success && payload.data) {
+      setAlerts(payload.data);
+    }
+  }
+
   async function runScan() {
     startTransition(async () => {
       try {
@@ -131,9 +154,36 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
           setSelectedListing(null);
         }
 
+        await refreshAlerts();
         toast.success(`Scan completed with ${payload.data.results.length} matched listings.`);
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Marketplace scan failed.");
+      }
+    });
+  }
+
+  async function runScheduledScans() {
+    startTransition(async () => {
+      try {
+        const response = await fetch(withBasePath("/api/marketplace-deals/schedules/run"), { method: "POST" });
+        const payload = (await response.json()) as { success?: boolean; error?: string };
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error ?? "Unable to run scheduled scans.");
+        }
+
+        const historyResponse = await fetch(withBasePath("/api/marketplace-deals/scans"));
+        const historyPayload = (await historyResponse.json()) as { success?: boolean; data?: MarketplaceDashboardData["scanHistory"]; error?: string };
+        if (historyResponse.ok && historyPayload.success && historyPayload.data) {
+          setScanHistory(historyPayload.data);
+          const latest = historyPayload.data[0];
+          if (latest) {
+            await loadScan(latest.id);
+          }
+        }
+        await refreshAlerts();
+        toast.success("Scheduled scans completed.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Scheduled scans failed.");
       }
     });
   }
@@ -152,7 +202,12 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
           body: JSON.stringify({
             name: presetName,
             description: presetDescription || null,
-            criteria
+            criteria,
+            scheduleEnabled,
+            scheduleLabel: scheduleLabel || null,
+            scheduleFrequencyMinutes: scheduleFrequency ? Number(scheduleFrequency) : null,
+            notificationChannels,
+            alertThresholdScore: alertThreshold ? Number(alertThreshold) : 82
           })
         });
         const payload = (await response.json()) as { success?: boolean; data?: MarketplaceSavedSearch; error?: string };
@@ -194,9 +249,55 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
     });
   }
 
+  async function markAlertsRead(alertIds: string[]) {
+    startTransition(async () => {
+      try {
+        const response = await fetch(withBasePath("/api/marketplace-deals/alerts"), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ alertIds })
+        });
+        const payload = (await response.json()) as { success?: boolean; data?: MarketplaceAlert[]; error?: string };
+        if (!response.ok || !payload.success) {
+          throw new Error(payload.error ?? "Unable to mark alerts read.");
+        }
+        if (payload.data) {
+          const updated = new Map(payload.data.map((alert) => [alert.id, alert]));
+          setAlerts((prev) => prev.map((alert) => updated.get(alert.id) ?? alert));
+        }
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to update alerts.");
+      }
+    });
+  }
+
   function exportCsv() {
     const url = withBasePath(`/api/marketplace-deals/export${activeScanId ? `?scanId=${activeScanId}` : ""}`);
     window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function toggleSource(sourceKey: string) {
+    setCriteria((prev) => {
+      const next = new Set(prev.sourceKeys);
+      if (next.has(sourceKey)) {
+        next.delete(sourceKey);
+      } else {
+        next.add(sourceKey);
+      }
+      return { ...prev, sourceKeys: Array.from(next) };
+    });
+  }
+
+  function toggleChannel(channel: string) {
+    setNotificationChannels((prev) => {
+      const next = new Set(prev);
+      if (next.has(channel)) {
+        next.delete(channel);
+      } else {
+        next.add(channel);
+      }
+      return Array.from(next);
+    });
   }
 
   return (
@@ -211,6 +312,10 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
               {isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4 text-[var(--accent)]" />}
               Run scan
             </Button>
+            <Button variant="outline" onClick={runScheduledScans} disabled={isPending}>
+              <Bell className="mr-2 h-4 w-4" />
+              Run scheduled
+            </Button>
             <Button variant="outline" onClick={exportCsv} disabled={!results.length}>
               <Download className="mr-2 h-4 w-4" />
               Export CSV
@@ -224,9 +329,12 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
           <Card>
             <CardHeader>
               <CardTitle>Search target</CardTitle>
-              <CardDescription>Define the listing shape to scan, comp, and rank.</CardDescription>
+              <CardDescription>Define the listing shape to scan, compare, and rank.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <Field label="Live search query">
+                <Input value={criteria.query} onChange={(event) => setCriteria((prev) => ({ ...prev, query: event.target.value }))} placeholder="milwaukee m18 drill kit" />
+              </Field>
               <div className="grid gap-3 md:grid-cols-2">
                 <Field label="Category">
                   <Input value={criteria.category} onChange={(event) => setCriteria((prev) => ({ ...prev, category: event.target.value }))} placeholder="power tools" />
@@ -279,6 +387,25 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
                 </Field>
               </div>
 
+              <div className="rounded-2xl border border-[var(--border)] bg-slate-50 p-4">
+                <p className="text-xs font-semibold text-slate-900">Sources</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">Pick sources to include. Leaving all unchecked uses every enabled source.</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {initialData.sources.map((source) => (
+                    <label key={source.key} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${source.enabled ? "border-[var(--border)] bg-white" : "border-dashed border-slate-200 bg-slate-100 text-slate-400"}`}>
+                      <input
+                        type="checkbox"
+                        checked={criteria.sourceKeys.includes(source.key)}
+                        onChange={() => toggleSource(source.key)}
+                        disabled={!source.enabled}
+                      />
+                      <span>{source.label}</span>
+                      <Badge variant={source.mode === "demo" ? "info" : source.enabled ? "success" : "warning"}>{source.mode}</Badge>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
                 <Field label="Preset name">
                   <Input value={presetName} onChange={(event) => setPresetName(event.target.value)} placeholder="Milwaukee flips in DFW" />
@@ -293,20 +420,58 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
                   </Button>
                 </div>
               </div>
+
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                <p className="text-xs font-semibold text-slate-900">Automation and alerts</p>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  <label className="flex items-center gap-2 text-sm text-slate-700">
+                    <input type="checkbox" checked={scheduleEnabled} onChange={(event) => setScheduleEnabled(event.target.checked)} />
+                    Enable scheduled scans
+                  </label>
+                  <Field label="Schedule label">
+                    <Input value={scheduleLabel} onChange={(event) => setScheduleLabel(event.target.value)} placeholder="Weekday morning sweep" />
+                  </Field>
+                  <Field label="Frequency (minutes)">
+                    <Input value={scheduleFrequency} onChange={(event) => setScheduleFrequency(event.target.value)} placeholder="120" type="number" />
+                  </Field>
+                  <Field label="Alert threshold score">
+                    <Input value={alertThreshold} onChange={(event) => setAlertThreshold(event.target.value)} placeholder="82" type="number" />
+                  </Field>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  {Object.entries(channelLabels).map(([key, label]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => toggleChannel(key)}
+                      className={`rounded-full border px-3 py-1 ${notificationChannels.includes(key) ? "border-[var(--accent)] bg-[var(--accent-subtle)] text-[var(--accent)]" : "border-[var(--border)] bg-white text-slate-600"}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle>Saved presets</CardTitle>
-              <CardDescription>Reusable scan targets with future cron-ready metadata.</CardDescription>
+              <CardDescription>Reusable scan targets with cron-ready metadata.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {savedSearches.map((savedSearch) => (
                 <button
                   key={savedSearch.id}
                   type="button"
-                  onClick={() => setCriteria(savedSearch.criteria)}
+                  onClick={() => {
+                    setCriteria(savedSearch.criteria);
+                    setScheduleEnabled(savedSearch.scheduleEnabled);
+                    setScheduleLabel(savedSearch.scheduleLabel ?? "");
+                    setScheduleFrequency(savedSearch.scheduleFrequencyMinutes ? String(savedSearch.scheduleFrequencyMinutes) : "120");
+                    setAlertThreshold(String(savedSearch.alertThresholdScore));
+                    setNotificationChannels(savedSearch.notificationChannels.length ? savedSearch.notificationChannels : ["dashboard"]);
+                  }}
                   className="w-full rounded-2xl border border-[var(--border)] bg-slate-50 p-4 text-left transition-colors hover:bg-white"
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -319,6 +484,7 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
                   <p className="mt-3 text-xs text-[var(--muted)]">
                     {savedSearch.lastScannedAt ? `Last scanned ${formatDateTime(savedSearch.lastScannedAt)}` : "Not scanned yet"}
                   </p>
+                  {savedSearch.nextRunAt ? <p className="mt-1 text-xs text-[var(--muted)]">Next run {formatDateTime(savedSearch.nextRunAt)}</p> : null}
                 </button>
               ))}
             </CardContent>
@@ -413,7 +579,7 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
                             </Badge>
                           </div>
                           <p className="mt-2 text-sm text-[var(--muted)]">
-                            {formatCurrency(result.listedPrice, result.currency)} listed · {formatCurrency(result.analysis.fairValueMid, result.currency)} fair value · {formatCurrency(result.analysis.priceDeltaAmount, result.currency)} upside
+                            {formatCurrency(result.listedPrice, result.currency)} listed - {formatCurrency(result.analysis.fairValueMid, result.currency)} fair value - {formatCurrency(result.analysis.priceDeltaAmount, result.currency)} upside
                           </p>
                           <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--muted)]">
                             <span>{result.location}</span>
@@ -477,6 +643,45 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
                 ))
               ) : (
                 <EmptyState title="No scans yet" description="Run the first scan to populate scan history, pricing analysis, and exportable results." />
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Deal alerts</CardTitle>
+              <CardDescription>High-scoring listings surfaced from scheduled or manual scans.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {alerts.length ? (
+                alerts.map((alert) => (
+                  <div key={alert.id} className={`rounded-xl border p-3 ${alert.readAt ? "border-[var(--border)] bg-white" : "border-[var(--accent)] bg-[var(--accent-subtle)]"}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">{alert.title}</p>
+                        <p className="mt-1 text-xs text-[var(--muted)]">
+                          Score {alert.dealScore} - {channelLabels[alert.channel] ?? alert.channel} - {formatDateTime(alert.createdAt)}
+                        </p>
+                        <p className="mt-2 text-xs text-slate-600">{alert.reasoning}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <Link
+                          href={`/marketplace-deals/${alert.listingId}` as Route}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--accent)]"
+                        >
+                          Open <Eye className="h-3.5 w-3.5" />
+                        </Link>
+                        {!alert.readAt ? (
+                          <Button size="sm" variant="outline" onClick={() => markAlertsRead([alert.id])}>
+                            Mark read
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <EmptyState title="No alerts yet" description="Run scans or enable schedules to surface high scoring deals." />
               )}
             </CardContent>
           </Card>

@@ -76,6 +76,11 @@ Copy `.env.example` to `.env.local` and fill in:
 Optional:
 
 - `OPENAI_MODEL`
+- `EBAY_CLIENT_ID`
+- `EBAY_CLIENT_SECRET`
+- `EBAY_MARKETPLACE_ID`
+- `SERPAPI_API_KEY`
+- `MARKETPLACE_ALERT_WEBHOOK_URL`
 
 ## Local Setup
 
@@ -152,8 +157,9 @@ Apply the migration files in order:
 - `supabase/migrations/0010_shared_ad_account_links.sql`
 - `supabase/migrations/0011_immutable_communication_archive.sql`
 - `supabase/migrations/0012_marketplace_deals.sql`
+- `supabase/migrations/0013_marketplace_alerts.sql`
 
-These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, message-copy dedupe, portal command-center, and marketplace-deals structures.
+These migrations create the required operational, archive, sync, audit, auto-responder, website lead-delivery, message-copy dedupe, portal command-center, and marketplace-deals structures (including alerts and scheduling).
 
 ## Deployment
 

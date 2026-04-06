@@ -1,5 +1,7 @@
 import { demoMarketplaceListings } from "@/lib/marketplace/demo-data";
 import { matchesMarketplaceCriteria, normalizeMarketplaceListing } from "@/lib/marketplace/normalization";
+import { ebayBrowseSourceDefinition, fetchEbayBrowseListings } from "@/lib/marketplace/adapters/ebay-browse";
+import { serpApiSourceDefinition, fetchSerpApiListings } from "@/lib/marketplace/adapters/serpapi";
 import type { MarketplaceNormalizedListing, MarketplaceSearchCriteria, MarketplaceSourceDefinition } from "@/types/marketplace";
 
 export interface MarketplaceSourceAdapter {
@@ -27,7 +29,7 @@ class DemoMarketplaceAdapter implements MarketplaceSourceAdapter {
   }
 }
 
-export const marketplaceSourceDefinitions: MarketplaceSourceDefinition[] = [
+const demoDefinitions: MarketplaceSourceDefinition[] = [
   {
     key: "marketplace_demo_feed",
     label: "Marketplace Demo Feed",
@@ -54,6 +56,14 @@ export const marketplaceSourceDefinitions: MarketplaceSourceDefinition[] = [
   }
 ];
 
-export const marketplaceSourceAdapters: MarketplaceSourceAdapter[] = marketplaceSourceDefinitions.map(
-  (definition) => new DemoMarketplaceAdapter(definition, definition.key)
-);
+export const marketplaceSourceDefinitions: MarketplaceSourceDefinition[] = [
+  ...demoDefinitions,
+  ebayBrowseSourceDefinition,
+  serpApiSourceDefinition
+];
+
+export const marketplaceSourceAdapters: MarketplaceSourceAdapter[] = [
+  ...demoDefinitions.map((definition) => new DemoMarketplaceAdapter(definition, definition.key)),
+  { definition: ebayBrowseSourceDefinition, search: fetchEbayBrowseListings },
+  { definition: serpApiSourceDefinition, search: fetchSerpApiListings }
+];

@@ -68,7 +68,7 @@ export function ListingDetailPanel({
             <div>
               <CardTitle className="text-base">{detail.result.title}</CardTitle>
               <CardDescription className="mt-2">
-                {detail.result.source.replaceAll("_", " ")} · {detail.result.location} · {detail.result.postedAt ? formatDateTime(detail.result.postedAt) : "posted time unknown"}
+                {detail.result.source.replaceAll("_", " ")} - {detail.result.location} - {detail.result.postedAt ? formatDateTime(detail.result.postedAt) : "posted time unknown"}
               </CardDescription>
             </div>
             <Badge variant={detail.result.analysis.dealScore >= 80 ? "success" : detail.result.analysis.dealScore >= 60 ? "info" : "warning"}>
@@ -152,7 +152,7 @@ export function ListingDetailPanel({
                         <div>
                           <p className="text-sm font-semibold text-slate-900">{comp.compTitle}</p>
                           <p className="mt-1 text-xs text-[var(--muted)]">
-                            {comp.compSource.replaceAll("_", " ")} · {comp.compLocation}
+                            {comp.compSource.replaceAll("_", " ")} - {comp.compLocation}
                           </p>
                         </div>
                         <p className="text-sm font-semibold text-slate-900">{formatCurrency(comp.compPrice, comp.compCurrency)}</p>

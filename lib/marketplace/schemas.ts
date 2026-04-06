@@ -2,7 +2,10 @@ import { z } from "zod";
 
 const nonNegativeNullableNumber = z.number().finite().min(0).nullable();
 
+const notificationChannelSchema = z.enum(["dashboard", "webhook", "email", "sms"]);
+
 export const marketplaceSearchCriteriaSchema = z.object({
+  query: z.string().trim().default(""),
   category: z.string().trim().default(""),
   keywords: z.array(z.string().trim().min(1)).default([]),
   mustIncludeWords: z.array(z.string().trim().min(1)).default([]),
@@ -26,17 +29,24 @@ export const marketplaceSavedSearchCreateSchema = z.object({
   criteria: marketplaceSearchCriteriaSchema,
   scheduleEnabled: z.boolean().default(false),
   scheduleLabel: z.string().trim().max(120).nullable().optional(),
+  scheduleFrequencyMinutes: z.number().int().min(5).max(10080).nullable().optional(),
+  notificationChannels: z.array(notificationChannelSchema).default(["dashboard"]),
   alertThresholdScore: z.number().int().min(1).max(100).default(82)
 });
 
 export const marketplaceScanRequestSchema = z.object({
   savedSearchId: z.string().uuid().optional(),
-  criteria: marketplaceSearchCriteriaSchema.optional()
+  criteria: marketplaceSearchCriteriaSchema.optional(),
+  runReason: z.string().trim().max(60).optional()
 });
 
 export const marketplaceListingStatusUpdateSchema = z.object({
   operatorStatus: z.enum(["new", "watched", "ignored", "contacted", "purchased"]),
   manualNotes: z.string().max(4000).default("")
+});
+
+export const marketplaceAlertUpdateSchema = z.object({
+  alertIds: z.array(z.string().uuid()).min(1)
 });
 
 export const marketplaceAIResponseSchema = z.object({

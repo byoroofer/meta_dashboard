@@ -95,7 +95,16 @@ export function normalizeMarketplaceListing(listing: MarketplaceSourceListing): 
     inferredCategory: inferCategory(listing),
     inferredCondition: normalizeCondition(listing.conditionRaw),
     searchableText: normalizeText(
-      [listing.title, listing.description, inferBrand(listing), inferModel(listing), inferCategory(listing), listing.location].filter(Boolean).join(" ")
+      [
+        listing.title,
+        listing.description,
+        inferBrand(listing),
+        inferModel(listing),
+        inferCategory(listing),
+        listing.location
+      ]
+        .filter(Boolean)
+        .join(" ")
     )
   };
 }
@@ -108,9 +117,36 @@ function includesAnyTerm(haystack: string, terms: string[]) {
   return terms.some((term) => haystack.includes(normalizeText(term)));
 }
 
+function uniqueParts(parts: string[]) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(trimmed);
+  }
+  return result;
+}
+
+export function buildMarketplaceSearchQuery(criteria: MarketplaceSearchCriteria) {
+  const parts = uniqueParts([
+    criteria.query,
+    criteria.brand,
+    criteria.model,
+    criteria.category,
+    ...criteria.keywords
+  ]);
+
+  return parts.join(" ").trim();
+}
+
 export function matchesMarketplaceCriteria(listing: MarketplaceNormalizedListing, criteria: MarketplaceSearchCriteria) {
   const haystack = listing.searchableText;
 
+  if (criteria.query && !haystack.includes(normalizeText(criteria.query))) return false;
   if (criteria.category && !haystack.includes(normalizeText(criteria.category))) return false;
   if (criteria.brand && listing.inferredBrand?.toLowerCase() !== criteria.brand.toLowerCase()) return false;
   if (criteria.model && !(listing.inferredModel ?? "").toLowerCase().includes(criteria.model.toLowerCase())) return false;
@@ -131,7 +167,12 @@ export function matchesMarketplaceCriteria(listing: MarketplaceNormalizedListing
 }
 
 export function createCriteriaLabel(criteria: MarketplaceSearchCriteria) {
-  const parts = [criteria.brand, criteria.model, criteria.category].filter(Boolean);
-  if (criteria.keywords.length) parts.push(criteria.keywords.join(" "));
-  return parts.join(" · ") || "Custom marketplace scan";
+  const parts = [
+    criteria.query,
+    criteria.brand,
+    criteria.model,
+    criteria.category,
+    criteria.keywords.length ? criteria.keywords.join(" ") : ""
+  ].filter(Boolean);
+  return parts.join(" - ") || "Custom marketplace scan";
 }
