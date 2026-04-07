@@ -2,6 +2,18 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-07T09:42:39.1136832-05:00 | Add coming-soon banner for live marketplace scans
+
+- Task: Make the marketplace page clearly indicate live scan availability.
+- Context: User asked to keep the page deployed but show "coming soon" until eBay credentials are provided.
+- Files changed: `components/marketplace/marketplace-deals-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Added a banner when no live sources are enabled, explaining live scans activate after API credentials are configured.
+- Rationale: Avoids implying live marketplace access before credentials are set while keeping the page usable with demo data.
+- Rollback plan: Remove the banner block and update memory files with a correction if needed.
+- Next steps: Deploy the UI change.
+
 ## 2026-04-07T09:36:20.3271124-05:00 | Deploy 15-minute marketplace cron cadence
 
 - Task: Commit, push, and deploy the 15-minute cron cadence change.

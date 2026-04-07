@@ -84,6 +84,7 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
   const [alertThreshold, setAlertThreshold] = useState("82");
   const [notificationChannels, setNotificationChannels] = useState<string[]>(["dashboard"]);
   const [isPending, startTransition] = useTransition();
+  const hasLiveSources = initialData.sources.some((source) => source.mode !== "demo" && source.enabled);
 
   const filteredResults = [...results]
     .filter((result) => {
@@ -323,6 +324,15 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
           </div>
         }
       />
+
+      {!hasLiveSources ? (
+        <Card className="border-dashed border-[var(--border)] bg-slate-50">
+          <CardHeader>
+            <CardTitle>Live marketplace scans are coming soon</CardTitle>
+            <CardDescription>Demo data is available today. Live scans will activate once API credentials are configured in production.</CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
 
       <section className="grid gap-4 xl:grid-cols-[0.78fr_1.22fr]">
         <div className="space-y-4">

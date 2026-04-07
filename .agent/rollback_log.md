@@ -2,6 +2,16 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-07T09:42:39.1136832-05:00 | Add coming-soon banner for marketplace live scans
+
+- Change summary: Added a banner on `/marketplace-deals` when no live sources are enabled to indicate live scans are coming soon.
+- Files changed: `components/marketplace/marketplace-deals-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: None.
+- Reversal steps:
+  1. Remove the banner block and `hasLiveSources` check from `components/marketplace/marketplace-deals-workspace.tsx`.
+  2. Update `.agent/` memory with a correction entry if needed.
+- Notes: This is a UI-only change.
+
 ## 2026-04-07T09:36:20.3271124-05:00 | Deploy 15-minute marketplace cron cadence
 
 - Change summary: Committed and deployed the 15-minute cron cadence for marketplace schedules.
