@@ -2,6 +2,30 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-07T09:33:56.8730311-05:00 | Restore session handoff after sandbox reset
+
+- Task: Restore missing `.agent/session_handoff.md` after sandbox interruption.
+- Context: The sandbox reset prevented finalizing the 15-minute cron cadence change; handoff file was missing.
+- Files changed: `.agent/session_handoff.md`, `.agent/work_log.md`, `.agent/rollback_log.md`
+- Commands run: `Get-Date -Format o`
+- Errors encountered: None after sandbox reset.
+- Fix or decision: Recreated `.agent/session_handoff.md` with current state and pending deploy note.
+- Rationale: AGENTS.md requires session handoff to be current after meaningful changes.
+- Rollback plan: Remove the new handoff file and log a correction if this entry is inaccurate.
+- Next steps: Commit and deploy the 15-minute cron cadence change, then configure API keys and run a live scan.
+
+## 2026-04-06T18:52:57.4376744-05:00 | Change marketplace cron cadence to every 15 minutes
+
+- Task: Update Vercel cron schedule to run marketplace scans every 15 minutes.
+- Context: User requested a 15-minute cadence.
+- Files changed: `vercel.json`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Cron schedule updated to `*/15 * * * *`.
+- Rationale: Shorter cadence matches the user's desired alert sensitivity.
+- Rollback plan: Revert `vercel.json` schedule to the previous hourly value, redeploy, and update `.agent/` memory if needed.
+- Next steps: Deploy the updated cron config, then configure live API keys and run a test scan.
+
 ## 2026-04-06T18:36:28.2024046-05:00 | Deploy Vercel cron configuration
 
 - Task: Deploy the Vercel cron config for marketplace schedules.

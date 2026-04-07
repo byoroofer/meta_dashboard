@@ -2,6 +2,27 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-07T09:33:56.8730311-05:00 | Restore session handoff after sandbox reset
+
+- Change summary: Recreated missing `.agent/session_handoff.md` after a sandbox interruption.
+- Files changed: `.agent/session_handoff.md`, `.agent/work_log.md`, `.agent/rollback_log.md`
+- State-changing commands: None.
+- Reversal steps:
+  1. Remove `.agent/session_handoff.md` if this entry is incorrect.
+  2. Append a correction entry here if needed.
+- Notes: The cron cadence change remains un-deployed.
+
+## 2026-04-06T18:52:57.4376744-05:00 | Update cron cadence to every 15 minutes
+
+- Change summary: Adjusted the Vercel cron schedule for marketplace scans to run every 15 minutes.
+- Files changed: `vercel.json`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: None (deployment pending).
+- Reversal steps:
+  1. Set the cron schedule back to the previous value in `vercel.json`.
+  2. Redeploy the project.
+  3. Append a correction entry here if this log is inaccurate.
+- Notes: Cron cadence changes require a deployment to take effect.
+
 ## 2026-04-06T18:36:28.2024046-05:00 | Deploy Vercel cron configuration
 
 - Change summary: Committed and deployed Vercel cron config for marketplace schedules.

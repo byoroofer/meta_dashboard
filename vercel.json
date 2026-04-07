@@ -25,7 +25,7 @@
   "crons": [
     {
       "path": "/meta-dashboard/api/marketplace-deals/schedules/run",
-      "schedule": "0 * * * *"
+      "schedule": "*/15 * * * *"
     }
   ]
 }
