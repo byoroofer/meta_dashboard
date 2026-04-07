@@ -2,6 +2,18 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-07T09:36:20.3271124-05:00 | Deploy 15-minute marketplace cron cadence
+
+- Task: Commit, push, and deploy the 15-minute cron cadence change.
+- Context: User requested scans every 15 minutes.
+- Files changed: `vercel.json`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `git add vercel.json .agent/session_handoff.md .agent/work_log.md .agent/rollback_log.md`; `git commit -m "Adjust marketplace cron to 15 minutes"`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`; `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Cron schedule now `*/15 * * * *` and deployed to production.
+- Rationale: Aligns scheduled scans with the requested cadence.
+- Rollback plan: Revert the cron schedule to the previous value in `vercel.json`, redeploy, and update memory entries if needed.
+- Next steps: Configure live API keys in Vercel and run a test scan.
+
 ## 2026-04-07T09:33:56.8730311-05:00 | Restore session handoff after sandbox reset
 
 - Task: Restore missing `.agent/session_handoff.md` after sandbox interruption.

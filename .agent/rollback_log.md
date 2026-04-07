@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-07T09:36:20.3271124-05:00 | Deploy 15-minute marketplace cron cadence
+
+- Change summary: Committed and deployed the 15-minute cron cadence for marketplace schedules.
+- Files changed: `vercel.json`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Revert `vercel.json` schedule to the prior cadence and redeploy.
+  2. Use Vercel rollback/promote to return to the previous deployment if needed.
+  3. Append a correction entry here if this log is inaccurate.
+- Notes: Production alias now points to `https://meta-dashboard-gh5fhlyin-byoroofers-projects.vercel.app`.
+
 ## 2026-04-07T09:33:56.8730311-05:00 | Restore session handoff after sandbox reset
 
 - Change summary: Recreated missing `.agent/session_handoff.md` after a sandbox interruption.
