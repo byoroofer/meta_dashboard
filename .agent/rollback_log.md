@@ -2,15 +2,16 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
-## 2026-04-07T09:42:39.1136832-05:00 | Add coming-soon banner for marketplace live scans
+## 2026-04-07T09:44:10.2228809-05:00 | Deploy coming-soon banner
 
-- Change summary: Added a banner on `/marketplace-deals` when no live sources are enabled to indicate live scans are coming soon.
+- Change summary: Deployed the coming-soon banner for live marketplace scans.
 - Files changed: `components/marketplace/marketplace-deals-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
-- State-changing commands: None.
+- State-changing commands: `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`
 - Reversal steps:
-  1. Remove the banner block and `hasLiveSources` check from `components/marketplace/marketplace-deals-workspace.tsx`.
-  2. Update `.agent/` memory with a correction entry if needed.
-- Notes: This is a UI-only change.
+  1. Revert commit `551e8f8` and redeploy.
+  2. Use Vercel rollback/promote to return to the previous deployment if needed.
+  3. Append a correction entry here if this log is inaccurate.
+- Notes: Production alias now points to `https://meta-dashboard-4r20le0u3-byoroofers-projects.vercel.app`.
 
 ## 2026-04-07T09:36:20.3271124-05:00 | Deploy 15-minute marketplace cron cadence
 

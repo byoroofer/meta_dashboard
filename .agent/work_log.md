@@ -2,6 +2,18 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-07T09:44:10.2228809-05:00 | Deploy coming-soon banner
+
+- Task: Commit, push, and deploy the live-scan coming-soon banner.
+- Context: User asked to keep page deployed while waiting on eBay credentials.
+- Files changed: `components/marketplace/marketplace-deals-workspace.tsx`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `git add components/marketplace/marketplace-deals-workspace.tsx .agent/work_log.md .agent/rollback_log.md .agent/session_handoff.md`; `git commit -m "Add coming soon banner for live scans"`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`; `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Added a banner when no live sources are enabled and deployed to production.
+- Rationale: Makes live-scan status explicit while keeping demo data available.
+- Rollback plan: Revert the banner commit and redeploy the prior production version.
+- Next steps: Configure live API keys when ready and run a live scan.
+
 ## 2026-04-07T09:42:39.1136832-05:00 | Add coming-soon banner for live marketplace scans
 
 - Task: Make the marketplace page clearly indicate live scan availability.
