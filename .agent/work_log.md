@@ -2,6 +2,18 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-07T23:45:40.8929077-05:00 | Deploy demo-mode gating
+
+- Task: Commit, push, and deploy the demo-mode gating changes.
+- Context: User asked to avoid fake searches while credentials are pending.
+- Files changed: `lib/config/env.ts`, `lib/marketplace/adapters/index.ts`, `components/marketplace/marketplace-deals-workspace.tsx`, `.env.example`, `README.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `git add lib/config/env.ts lib/marketplace/adapters/index.ts components/marketplace/marketplace-deals-workspace.tsx .env.example README.md .agent/work_log.md .agent/rollback_log.md .agent/session_handoff.md`; `git commit -m "Disable demo scans unless enabled"`; `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`; `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision: Demo adapters now require `MARKETPLACE_DEMO_MODE=true`; scan buttons warn when no live sources are enabled.
+- Rationale: Prevents fake/demo results while keeping the page deployed.
+- Rollback plan: Revert commit `a7c43a7`, redeploy, and update memory files if needed.
+- Next steps: Configure live API keys when ready and run a real scan.
+
 ## 2026-04-07T23:42:07.7229540-05:00 | Disable demo adapters by default and clarify live-scan gating
 
 - Task: Remove demo listings from production scans and make live-scan requirements explicit.

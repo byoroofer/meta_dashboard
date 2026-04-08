@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-07T23:45:40.8929077-05:00 | Deploy demo-mode gating
+
+- Change summary: Deployed demo-mode gating to prevent demo results unless explicitly enabled.
+- Files changed: `lib/config/env.ts`, `lib/marketplace/adapters/index.ts`, `components/marketplace/marketplace-deals-workspace.tsx`, `.env.example`, `README.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: `git push origin codex/marketplace-deals`; `cmd /c npx vercel deploy --prod --yes`
+- Reversal steps:
+  1. Revert commit `a7c43a7` and redeploy.
+  2. Use Vercel rollback/promote to return to the previous deployment if needed.
+  3. Append a correction entry here if this log is inaccurate.
+- Notes: Production alias now points to `https://meta-dashboard-qlfl2ia2z-byoroofers-projects.vercel.app`.
+
 ## 2026-04-07T23:42:07.7229540-05:00 | Disable demo adapters by default and gate scans
 
 - Change summary: Added `MARKETPLACE_DEMO_MODE` env gate, disabled demo adapters by default, and gated scan actions when no live sources are enabled.
