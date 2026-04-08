@@ -24,6 +24,7 @@ const envSchema = z.object({
   EBAY_CLIENT_SECRET: z.string().default(""),
   EBAY_MARKETPLACE_ID: z.string().default("EBAY_US"),
   SERPAPI_API_KEY: z.string().default(""),
+  MARKETPLACE_DEMO_MODE: z.string().default("false"),
   MARKETPLACE_ALERT_WEBHOOK_URL: z.string().default(""),
   ENCRYPTION_KEY: z.string().default(""),
   DASHBOARD_ADMIN_PASSWORD: z.string().default(""),
@@ -54,6 +55,7 @@ export const env = envSchema.parse({
   EBAY_CLIENT_SECRET: process.env.EBAY_CLIENT_SECRET,
   EBAY_MARKETPLACE_ID: process.env.EBAY_MARKETPLACE_ID,
   SERPAPI_API_KEY: process.env.SERPAPI_API_KEY,
+  MARKETPLACE_DEMO_MODE: process.env.MARKETPLACE_DEMO_MODE,
   MARKETPLACE_ALERT_WEBHOOK_URL: process.env.MARKETPLACE_ALERT_WEBHOOK_URL,
   ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
   DASHBOARD_ADMIN_PASSWORD: process.env.DASHBOARD_ADMIN_PASSWORD,
@@ -71,6 +73,7 @@ export const hasMetaConfig = Boolean(
 export const hasMetaSystemUser = Boolean(env.META_SYSTEM_USER_ACCESS_TOKEN);
 export const hasEbayBrowseConfig = Boolean(env.EBAY_CLIENT_ID && env.EBAY_CLIENT_SECRET);
 export const hasSerpApiConfig = Boolean(env.SERPAPI_API_KEY);
+export const hasMarketplaceDemoMode = env.MARKETPLACE_DEMO_MODE.toLowerCase() === "true";
 export const hasMarketplaceAlertWebhook = Boolean(env.MARKETPLACE_ALERT_WEBHOOK_URL);
 
 function parseMessagingPageTokenMap(raw: string) {

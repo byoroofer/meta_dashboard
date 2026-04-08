@@ -85,6 +85,7 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
   const [notificationChannels, setNotificationChannels] = useState<string[]>(["dashboard"]);
   const [isPending, startTransition] = useTransition();
   const hasLiveSources = initialData.sources.some((source) => source.mode !== "demo" && source.enabled);
+  const hasAnyEnabledSource = initialData.sources.some((source) => source.enabled);
 
   const filteredResults = [...results]
     .filter((result) => {
@@ -128,6 +129,10 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
   }
 
   async function runScan() {
+    if (!hasAnyEnabledSource) {
+      toast.error("Live marketplace sources are not configured yet.");
+      return;
+    }
     startTransition(async () => {
       try {
         const response = await fetch(withBasePath("/api/marketplace-deals/scans"), {
@@ -164,6 +169,10 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
   }
 
   async function runScheduledScans() {
+    if (!hasAnyEnabledSource) {
+      toast.error("Live marketplace sources are not configured yet.");
+      return;
+    }
     startTransition(async () => {
       try {
         const response = await fetch(withBasePath("/api/marketplace-deals/schedules/run"), { method: "POST" });
@@ -309,11 +318,11 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
         description="Scan supported listing feeds, normalize messy titles, build comparable sets, estimate fair value with OpenAI-backed reasoning, and rank the strongest deals without pretending the model knows live prices on its own."
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" onClick={runScan} disabled={isPending}>
+            <Button variant="secondary" onClick={runScan} disabled={isPending || !hasAnyEnabledSource}>
               {isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4 text-[var(--accent)]" />}
               Run scan
             </Button>
-            <Button variant="outline" onClick={runScheduledScans} disabled={isPending}>
+            <Button variant="outline" onClick={runScheduledScans} disabled={isPending || !hasAnyEnabledSource}>
               <Bell className="mr-2 h-4 w-4" />
               Run scheduled
             </Button>
@@ -329,7 +338,7 @@ export function MarketplaceDealsWorkspace({ initialData }: { initialData: Market
         <Card className="border-dashed border-[var(--border)] bg-slate-50">
           <CardHeader>
             <CardTitle>Live marketplace scans are coming soon</CardTitle>
-            <CardDescription>Demo data is available today. Live scans will activate once API credentials are configured in production.</CardDescription>
+            <CardDescription>Live scans will activate once API credentials are configured in production. Demo sources are disabled.</CardDescription>
           </CardHeader>
         </Card>
       ) : null}

@@ -2,6 +2,21 @@
 
 Purpose: durable, searchable record of meaningful technical work. Keep newest entries first. Summarize noisy command output instead of pasting raw terminal spam.
 
+## 2026-04-07T23:42:07.7229540-05:00 | Disable demo adapters by default and clarify live-scan gating
+
+- Task: Remove demo listings from production scans and make live-scan requirements explicit.
+- Context: User does not want fake search results; marketplace scans were returning 0 results with live adapters disabled.
+- Files changed: `lib/config/env.ts`, `lib/marketplace/adapters/index.ts`, `components/marketplace/marketplace-deals-workspace.tsx`, `.env.example`, `README.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- Commands run: `Get-Date -Format o`
+- Errors encountered: None.
+- Fix or decision:
+  1. Added `MARKETPLACE_DEMO_MODE` env gate (default false) to control demo adapters.
+  2. Disabled scan buttons and show a clear message when no live sources are enabled.
+  3. Updated docs and env example to reflect the demo gate.
+- Rationale: Prevents demo data from being shown in production while clarifying that live results require API credentials.
+- Rollback plan: Remove the demo-mode gate, re-enable demo adapters by default, and revert the UI gating.
+- Next steps: Deploy the changes and configure API keys when ready.
+
 ## 2026-04-07T09:44:10.2228809-05:00 | Deploy coming-soon banner
 
 - Task: Commit, push, and deploy the live-scan coming-soon banner.

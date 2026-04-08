@@ -1,3 +1,4 @@
+import { hasMarketplaceDemoMode } from "@/lib/config/env";
 import { demoMarketplaceListings } from "@/lib/marketplace/demo-data";
 import { matchesMarketplaceCriteria, normalizeMarketplaceListing } from "@/lib/marketplace/normalization";
 import { ebayBrowseSourceDefinition, fetchEbayBrowseListings } from "@/lib/marketplace/adapters/ebay-browse";
@@ -34,7 +35,7 @@ const demoDefinitions: MarketplaceSourceDefinition[] = [
     key: "marketplace_demo_feed",
     label: "Marketplace Demo Feed",
     mode: "demo",
-    enabled: true,
+    enabled: hasMarketplaceDemoMode,
     legalSummary: "Curated demo adapter for local development and UI verification. No live scraping.",
     rateLimitLabel: "local dataset"
   },
@@ -42,7 +43,7 @@ const demoDefinitions: MarketplaceSourceDefinition[] = [
     key: "community_classifieds_demo",
     label: "Community Classifieds Demo",
     mode: "demo",
-    enabled: true,
+    enabled: hasMarketplaceDemoMode,
     legalSummary: "Curated demo adapter that simulates a public classifieds source without live crawling.",
     rateLimitLabel: "local dataset"
   },
@@ -50,7 +51,7 @@ const demoDefinitions: MarketplaceSourceDefinition[] = [
     key: "estate_finds_demo",
     label: "Estate Finds Demo",
     mode: "demo",
-    enabled: true,
+    enabled: hasMarketplaceDemoMode,
     legalSummary: "Curated demo adapter for comparing across multiple source shapes while live safe sources are pending.",
     rateLimitLabel: "local dataset"
   }

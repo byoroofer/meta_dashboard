@@ -2,6 +2,17 @@
 
 Purpose: make changes reversible. Record changed files, state-changing commands, and explicit reversal steps. Keep newest entries first.
 
+## 2026-04-07T23:42:07.7229540-05:00 | Disable demo adapters by default and gate scans
+
+- Change summary: Added `MARKETPLACE_DEMO_MODE` env gate, disabled demo adapters by default, and gated scan actions when no live sources are enabled.
+- Files changed: `lib/config/env.ts`, `lib/marketplace/adapters/index.ts`, `components/marketplace/marketplace-deals-workspace.tsx`, `.env.example`, `README.md`, `.agent/work_log.md`, `.agent/rollback_log.md`, `.agent/session_handoff.md`
+- State-changing commands: None.
+- Reversal steps:
+  1. Remove `MARKETPLACE_DEMO_MODE` from env config and set demo adapters to enabled by default.
+  2. Remove the scan-button gating and toast warnings.
+  3. Revert `.env.example` and `README.md` entries.
+- Notes: This keeps demo data out of production until explicitly enabled.
+
 ## 2026-04-07T09:44:10.2228809-05:00 | Deploy coming-soon banner
 
 - Change summary: Deployed the coming-soon banner for live marketplace scans.
